@@ -1,0 +1,44 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Python environments and generated files
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Editors and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Runtime output
+*.log
+artifacts/*
+!artifacts/models/
+artifacts/models/*
+!artifacts/models/paysim_lightgbm_scorer.joblib
+!artifacts/models/paysim_realtime_metrics.json
+
+# Downloaded research datasets; keep the runtime PaySim file tracked
+data/downloads/*
+!data/downloads/SHA256SUMS.txt
+data/paysim_full/
+data/elliptic/
+data/bank_account_fraud/
+data/ibm_amlworld/

@@ -1,0 +1,41 @@
+{
+  "mode": "normal_temporal_paysim_lightgbm",
+  "rows": 99416,
+  "target_candidate_rate": 0.05,
+  "split_rows": [
+    59649,
+    19883,
+    19884
+  ],
+  "split_fraud": [
+    48,
+    9,
+    61
+  ],
+  "candidate_threshold": 0.227463845289663,
+  "learned_weights": [
+    0.5,
+    0.05,
+    0.2,
+    0.25
+  ],
+  "validation_stats": {
+    "candidate_threshold": 0.227463845289663,
+    "candidate_rate": 0.050042750088014884,
+    "reduction_ratio": 0.9499572499119852,
+    "fraud_retention": 1.0,
+    "alpha_supervised": 0.5,
+    "beta_anomaly": 0.05,
+    "gamma_graph": 0.2,
+    "delta_rules": 0.25
+  },
+  "test_pr_auc": 0.8755449481426583,
+  "test_roc_auc": 0.9678184721672044,
+  "test_fraud_capture_rate": 0.9672131147540983,
+  "test_precision": 0.06908665105386416,
+  "test_candidates": 854,
+  "test_candidate_rate": 0.04294910480788574,
+  "test_fraud_detected": 59,
+  "test_false_alerts": 795,
+  "runtime_seconds": 24.12461830000393
+}
