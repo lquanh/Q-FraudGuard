@@ -26,6 +26,7 @@ __all__ = [
     "build_investigation_qubo",
     "build_fraud_qubo",
     "build_selection_qubo",
+    "exact_k_penalty_bound",
 ]
 
 
@@ -290,6 +291,45 @@ class QUBOModel:
                 if abs(quadratic) > atol:
                     coefficients[(i, j)] = quadratic
         return coefficients
+
+    def to_bqm(self) -> Any:
+        """Return an energy-identical ``dimod.BinaryQuadraticModel`` (offset included).
+
+        Every variable ``0..n-1`` is present even when all of its coefficients
+        are zero, so samplers always return full-length samples.
+        """
+
+        import dimod
+
+        bqm = dimod.BinaryQuadraticModel.from_qubo(self.to_qubo_dict(), offset=self.offset)
+        bqm.add_linear_from((index, 0.0) for index in range(self.n_variables))
+        return bqm
+
+
+def exact_k_penalty_bound(
+    risks: Iterable[Real],
+    suspicious_edges: EdgeInput = None,
+    *,
+    connectivity_strength: float = 1.0,
+) -> float:
+    """Largest reward a single variable can contribute to an investigation QUBO.
+
+    Any penalty strictly greater than this value already makes every global
+    optimum of :func:`build_investigation_qubo` feasible: from an infeasible
+    state with too many selections, dropping one variable loses at most this
+    reward but removes at least one unit of penalty; with too few selections,
+    adding one never lowers the (non-negative) reward and always removes
+    penalty.  Using a tight penalty instead of the full reward sum keeps the
+    objective resolvable after a QPU rescales coefficients to its analog range.
+    """
+
+    risk = _as_float_vector(risks, name="risks")
+    edges = _normalise_edges(suspicious_edges, int(risk.size))
+    incident = risk.copy()
+    for i, j, weight in edges:
+        incident[i] += connectivity_strength * weight
+        incident[j] += connectivity_strength * weight
+    return float(max(0.0, incident.max()))
 
 
 def build_structured_fraud_qubo(

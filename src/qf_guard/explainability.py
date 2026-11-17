@@ -66,12 +66,21 @@ def investigation_narrative(record: Mapping[str, Any]) -> str:
     )
 
 
-def recommended_treatment(record: Mapping[str, Any]) -> dict[str, str]:
-    """Return a review-safe treatment plan; no adverse action is automatic."""
+def recommended_treatment(
+    record: Mapping[str, Any],
+    *,
+    hold_threshold: float = 0.80,
+    verify_threshold: float = 0.60,
+) -> dict[str, str]:
+    """Return a review-safe treatment plan; no adverse action is automatic.
+
+    Thresholds are on the model's own risk scale, so callers should pass the
+    operating points learned for the deployed scorer.
+    """
 
     score = float(record.get("risk_score", 0))
     codes = set(str(record.get("reason_codes", "")).split("|"))
-    if score >= 0.80 or {"BALANCE_DRAIN", "CONNECTED_SELECTION"} <= codes:
+    if score >= hold_threshold or {"BALANCE_DRAIN", "CONNECTED_SELECTION"} <= codes:
         return {
             "recommended_action": "hold_and_escalate",
             "action_detail": (
@@ -80,7 +89,7 @@ def recommended_treatment(record: Mapping[str, Any]) -> dict[str, str]:
             ),
             "review_sla": "15_minutes",
         }
-    if score >= 0.60 or "NETWORK_PATTERN" in codes:
+    if score >= verify_threshold or "NETWORK_PATTERN" in codes:
         return {
             "recommended_action": "step_up_verification",
             "action_detail": (

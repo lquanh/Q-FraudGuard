@@ -5,18 +5,22 @@ from time import perf_counter
 
 import numpy as np
 
+from qf_guard.postprocess import best_result
 from qf_guard.qubo import QUBOModel
 from qf_guard.results import SolverResult
 
 
 @dataclass(slots=True)
 class OpenJijSQASolver:
+    """Simulated Quantum Annealing on the local CPU (no quantum hardware)."""
+
     num_reads: int = 64
     num_sweeps: int = 100
     trotter: int = 4
     beta: float = 100.0
     gamma: float = 1.0
     seed: int = 42
+    local_search: bool = True
 
     def solve(self, model: QUBOModel) -> SolverResult:
         import openjij
@@ -39,18 +43,16 @@ class OpenJijSQASolver:
         indices = [int(value) for value in response.indices]
         samples = np.zeros((len(states), model.n_variables), dtype=np.int8)
         samples[:, indices] = states
-        feasible = np.asarray([model.is_feasible(sample) for sample in samples])
-        pool = np.flatnonzero(feasible) if feasible.any() else np.arange(len(samples))
-        objectives = model.evaluate_many(samples[pool])
-        sample = samples[int(pool[int(np.argmin(objectives))])]
-        return SolverResult(
-            objective=model.evaluate(sample),
-            runtime=perf_counter() - started,
-            feasible=model.is_feasible(sample),
-            selected_indices=model.selected_indices(sample),
-            sample=sample,
+        return best_result(
+            model,
+            samples,
+            started=started,
+            finished=perf_counter(),
+            local_search=self.local_search,
             metadata={
                 "solver": "openjij_sqa",
+                "backend": "cpu-simulated-quantum-annealing",
+                "hardware": "local CPU",
                 "num_reads": self.num_reads,
                 "num_sweeps": self.num_sweeps,
                 "trotter": self.trotter,

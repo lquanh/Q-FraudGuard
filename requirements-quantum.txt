@@ -1,0 +1,3 @@
+# D-Wave Leap access (QPU, hybrid CQM, offline mock QPU)
+-r requirements.txt
+dwave-ocean-sdk==9.4.0

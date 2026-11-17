@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from functools import lru_cache
 from types import SimpleNamespace
 
 import pandas as pd
@@ -38,12 +37,17 @@ class RealtimePipeline:
 
 @dataclass(slots=True)
 class RealtimeService:
+    """Stateful scoring service; keep one instance per stream/session.
+
+    The scorer carries the transaction history used for causal features, so
+    sharing a service between independent streams would mix their histories.
+    """
+
     pipeline: RealtimePipeline = field(default_factory=RealtimePipeline)
+
+    @classmethod
+    def from_scorer(cls, scorer: RiskScorer) -> "RealtimeService":
+        return cls(RealtimePipeline(scorer=scorer, is_fitted=True))
 
     def score_transactions(self, transactions: pd.DataFrame) -> list[dict[str, object]]:
         return self.pipeline.score_transactions(transactions).to_dict(orient="records")
-
-
-@lru_cache(maxsize=1)
-def get_service() -> RealtimeService:
-    return RealtimeService()
