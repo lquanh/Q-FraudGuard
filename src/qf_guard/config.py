@@ -15,6 +15,18 @@ class ScoringConfig:
     target_fraud_retention: float = .95
     target_candidate_rate: float = .15
     random_state: int = 42
+    #: Optional feature groups on top of the base set ("attributes", "formats",
+    #: "confirmed"); empty keeps the original PaySim feature set.
+    feature_groups: tuple[str, ...] = ()
+    #: Delay before a confirmed laundering label may be used as a feature.
+    label_delay_minutes: int = 1440
+    #: Overrides for the LightGBM classifier (None keeps the original settings).
+    lightgbm_params: dict | None = None
+    #: If set, the alert threshold is chosen on validation so that at least this
+    #: share of validation frauds is flagged (instead of a fixed flag rate).
+    target_recall: float | None = None
+    # Fraction of validation transactions that the manual review team can handle.
+    review_rate: float = .02
 
     @property
     def normalized_weights(self) -> tuple[float, float, float, float]:

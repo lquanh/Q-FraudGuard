@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pandas as pd
 
 from qf_guard.data import normalize_transactions
+from qf_guard.online import OnlineFeatures
 from qf_guard.scoring import RiskScorer
 
 
@@ -51,3 +52,24 @@ class RealtimeService:
 
     def score_transactions(self, transactions: pd.DataFrame) -> list[dict[str, object]]:
         return self.pipeline.score_transactions(transactions).to_dict(orient="records")
+
+
+class EventScorer:
+    """Score normalized events in source order with an independent incremental state."""
+
+    def __init__(self, scorer: RiskScorer):
+        self.model = scorer
+        scorer._check_fitted()
+        self.features = OnlineFeatures(
+            getattr(scorer, "confirmed_minute_", {}), getattr(scorer, "label_delay_minutes_", 1440),
+            tuple(getattr(scorer, "feature_groups_", ()) or ()),
+        )
+        if scorer.history_transactions_ is not None:
+            self.features.warm(scorer.history_transactions_)
+
+    def score(self, events: pd.DataFrame) -> pd.DataFrame:
+        batch, graph, matrix = self.features.transform(events.reset_index(drop=True))
+        columns = getattr(self.model, "feature_columns_", None)
+        if columns is not None:
+            matrix = matrix.loc[:, list(columns)]
+        return self.model._decisions(self.model._predict_components(batch, graph, matrix))

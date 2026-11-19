@@ -1,0 +1,9 @@
+{
+  "model_sha256": "669717e163df256d82b0905aef95f5d5fcb9f30633f8c833b61fd36ed363aace",
+  "review_rate_target": 0.02,
+  "review_threshold": 0.25595145111608625,
+  "validation_rows": 19883,
+  "validation_reviews": 413,
+  "validation_frauds": 9,
+  "validation_review_hits": 9
+}

@@ -29,6 +29,12 @@ PAYSIM_ALIASES = {
     "isFraud": "is_fraud",
 }
 
+CANONICAL_DEFAULTS = {
+    "type": "TRANSFER", "device_id": "UNKNOWN_DEVICE", "country": "UNKNOWN",
+    "old_balance_sender": 0.0, "new_balance_sender": 0.0,
+    "old_balance_receiver": 0.0, "new_balance_receiver": 0.0,
+}
+
 
 def normalize_transactions(frame: pd.DataFrame) -> pd.DataFrame:
     if frame.empty:
@@ -47,19 +53,11 @@ def normalize_transactions(frame: pd.DataFrame) -> pd.DataFrame:
             normalized["timestamp"] = pd.date_range(
                 "2026-01-01", periods=count, freq="min", tz="UTC"
             )
-    normalized["timestamp"] = pd.to_datetime(normalized["timestamp"], utc=True, errors="coerce")
+    normalized["timestamp"] = pd.to_datetime(normalized["timestamp"], utc=True, errors="coerce", format="mixed")
+    normalized["timestamp"] = normalized["timestamp"].dt.as_unit("ns")
     if normalized["timestamp"].isna().any():
         raise ValueError("timestamp contains invalid values")
-    defaults = {
-        "type": "TRANSFER",
-        "device_id": "UNKNOWN_DEVICE",
-        "country": "UNKNOWN",
-        "old_balance_sender": 0.0,
-        "new_balance_sender": 0.0,
-        "old_balance_receiver": 0.0,
-        "new_balance_receiver": 0.0,
-    }
-    for column, default in defaults.items():
+    for column, default in CANONICAL_DEFAULTS.items():
         if column not in normalized:
             normalized[column] = default
     required = ("amount", "sender_id", "receiver_id")

@@ -32,6 +32,24 @@ FEATURE_COLUMNS = (
 )
 
 
+#: AMLworld payment formats (one-hot when the "amlworld" feature set is used).
+AMLWORLD_FORMATS = ("ACH", "Bitcoin", "Cash", "Cheque", "Credit Card", "Reinvestment", "Wire")
+ATTRIBUTE_COLUMNS = ("is_cross_bank", "is_self_transfer", "currency_mismatch")
+FORMAT_COLUMNS = tuple(f"fmt_{name.lower().replace(' ', '_')}" for name in AMLWORLD_FORMATS)
+LABEL_COLUMNS = (
+    "sender_confirmed",
+    "receiver_confirmed",
+    "sender_confirmed_contacts",
+    "receiver_confirmed_contacts",
+)
+#: Optional feature groups on top of FEATURE_COLUMNS.
+FEATURE_GROUPS = {
+    "attributes": ATTRIBUTE_COLUMNS,
+    "formats": FORMAT_COLUMNS,
+    "confirmed": LABEL_COLUMNS,
+}
+
+
 @dataclass(slots=True)
 class FeatureBatch:
     transactions: pd.DataFrame
@@ -45,6 +63,32 @@ def engineer_features(
     """Build causal numeric features, optionally carrying state from earlier records."""
 
     transactions, current_mask, current_transactions = _transaction_context(frame, history)
+    features = transaction_attributes(transactions)
+    features["velocity_1h"] = _rolling_entity_count(transactions, "sender_id", 60)
+    features["velocity_24h"] = _rolling_entity_count(transactions, "sender_id", 24 * 60)
+    features["receiver_novelty"] = (
+        ~transactions.duplicated(subset=["sender_id", "receiver_id"], keep="first")
+    ).astype(float)
+    device_accounts = _cumulative_unique_count(transactions, "device_id", "sender_id")
+    features["device_account_count"] = np.log1p(device_accounts)
+    features["sender_frequency"] = np.log1p(
+        transactions.groupby("sender_id", sort=False).cumcount().to_numpy(dtype=float) + 1.0
+    )
+    features["receiver_frequency"] = np.log1p(
+        transactions.groupby("receiver_id", sort=False).cumcount().to_numpy(dtype=float) + 1.0
+    )
+    features = features.loc[:, list(FEATURE_COLUMNS)].replace([np.inf, -np.inf], 0).fillna(0)
+    if current_mask is not None:
+        features = features.loc[current_mask].reset_index(drop=True)
+        transactions = current_transactions
+    return FeatureBatch(
+        transactions=transactions.reset_index(drop=True),
+        matrix=features.astype(float).reset_index(drop=True),
+    )
+
+
+def transaction_attributes(transactions: pd.DataFrame) -> pd.DataFrame:
+    """Features of the event itself, shared by offline and incremental scoring."""
     old_sender = transactions["old_balance_sender"].to_numpy(dtype=float)
     new_sender = transactions["new_balance_sender"].to_numpy(dtype=float)
     old_receiver = transactions["old_balance_receiver"].to_numpy(dtype=float)
@@ -64,19 +108,6 @@ def engineer_features(
     features["receiver_balance_error"] = np.abs(old_receiver + amount - new_receiver) / (
         old_receiver + amount + 1.0
     )
-    features["velocity_1h"] = _rolling_entity_count(transactions, "sender_id", 60)
-    features["velocity_24h"] = _rolling_entity_count(transactions, "sender_id", 24 * 60)
-    features["receiver_novelty"] = (
-        ~transactions.duplicated(subset=["sender_id", "receiver_id"], keep="first")
-    ).astype(float)
-    device_accounts = _cumulative_unique_count(transactions, "device_id", "sender_id")
-    features["device_account_count"] = np.log1p(device_accounts)
-    features["sender_frequency"] = np.log1p(
-        transactions.groupby("sender_id", sort=False).cumcount().to_numpy(dtype=float) + 1.0
-    )
-    features["receiver_frequency"] = np.log1p(
-        transactions.groupby("receiver_id", sort=False).cumcount().to_numpy(dtype=float) + 1.0
-    )
     hour = transactions["timestamp"].dt.hour + transactions["timestamp"].dt.minute / 60
     features["hour_sin"] = np.sin(2 * np.pi * hour / 24)
     features["hour_cos"] = np.cos(2 * np.pi * hour / 24)
@@ -84,14 +115,7 @@ def engineer_features(
     for tx_type in TRANSACTION_TYPES:
         features[f"type_{tx_type.lower()}"] = (transactions["type"] == tx_type).astype(float)
 
-    features = features.loc[:, list(FEATURE_COLUMNS)].replace([np.inf, -np.inf], 0).fillna(0)
-    if current_mask is not None:
-        features = features.loc[current_mask].reset_index(drop=True)
-        transactions = current_transactions
-    return FeatureBatch(
-        transactions=transactions.reset_index(drop=True),
-        matrix=features.astype(float).reset_index(drop=True),
-    )
+    return features
 
 
 def graph_risk_features(
@@ -119,6 +143,15 @@ def graph_risk_features(
     flow_through = _receiver_seen_as_sender(transactions)
     rapid = _rolling_entity_count(transactions, "sender_id", 60)
 
+    components = graph_components(sender_count, receiver_count, sender_unique_receivers,
+                                  receiver_unique_senders, shared_device_accounts, flow_through, rapid)
+    if current_mask is not None:
+        components = components.loc[current_mask]
+    return components.reset_index(drop=True)
+
+
+def graph_components(sender_count, receiver_count, sender_unique_receivers,
+                     receiver_unique_senders, shared_device_accounts, flow_through, rapid):
     components = pd.DataFrame(
         {
             "fan_out": np.clip((sender_unique_receivers - 1.0) / 5.0, 0, 1),
@@ -129,7 +162,6 @@ def graph_risk_features(
             "flow_through": flow_through,
             "rapid_activity": np.clip((rapid - 1) / 7, 0, 1),
         },
-        index=transactions.index,
     )
     components["graph_score"] = (
         0.17 * components["fan_out"]
@@ -140,9 +172,102 @@ def graph_risk_features(
         + 0.15 * components["flow_through"]
         + 0.13 * components["rapid_activity"]
     ).clip(0, 1)
-    if current_mask is not None:
-        components = components.loc[current_mask]
-    return components.reset_index(drop=True)
+    return components
+
+
+def _bank(account_ids: pd.Series) -> pd.Series:
+    """Bank prefix of "bank:account" ids (AMLworld); empty when there is none."""
+
+    parts = account_ids.astype(str).str.split(":", n=1)
+    return parts.map(lambda p: p[0] if len(p) == 2 else "")
+
+
+def attribute_features(transactions: pd.DataFrame, groups: tuple[str, ...]) -> pd.DataFrame:
+    """Per-transaction attributes that need no history (AMLworld columns).
+
+    Missing source columns give zeros, so a PaySim frame simply gets a block of
+    zeros instead of an error.
+    """
+
+    out = pd.DataFrame(index=transactions.index)
+    if "attributes" in groups:
+        sender_bank, receiver_bank = _bank(transactions["sender_id"]), _bank(transactions["receiver_id"])
+        out["is_cross_bank"] = ((sender_bank != receiver_bank) & (sender_bank != "")).astype(float)
+        out["is_self_transfer"] = (transactions["sender_id"] == transactions["receiver_id"]).astype(float)
+        if {"payment_currency", "receiving_currency"} <= set(transactions.columns):
+            paid, received = transactions["payment_currency"], transactions["receiving_currency"]
+            out["currency_mismatch"] = (paid.notna() & received.notna() & paid.ne(received)).astype(float)
+        else:
+            out["currency_mismatch"] = 0.0
+    if "formats" in groups:
+        fmt = transactions["payment_format"].astype(str) if "payment_format" in transactions else None
+        for name, column in zip(AMLWORLD_FORMATS, FORMAT_COLUMNS, strict=True):
+            out[column] = (fmt == name).astype(float) if fmt is not None else 0.0
+    return out
+
+
+def confirmed_contact_features(
+    context: pd.DataFrame,
+    confirmed_minute: dict[str, int],
+    delay_minutes: int,
+) -> pd.DataFrame:
+    """Causal features from a list of *confirmed* laundering accounts (SIMO-style).
+
+    ``confirmed_minute[account]`` is when the account was first involved in a
+    laundering transaction; it only becomes known ``delay_minutes`` later.  For
+    every row (in time order) this returns, using only information available
+    before the row:
+
+    * whether the sender / receiver is already on the confirmed list;
+    * how many distinct confirmed accounts the sender / receiver has dealt with.
+    """
+
+    n = len(context)
+    minutes = context["timestamp"].astype("int64").to_numpy() // 60_000_000_000
+    senders = context["sender_id"].astype(str).to_numpy()
+    receivers = context["receiver_id"].astype(str).to_numpy()
+    activation = sorted((minute + delay_minutes, account) for account, minute in confirmed_minute.items())
+    active: set[str] = set()
+    neighbours: dict[str, set[str]] = defaultdict(set)
+    counted: dict[str, set[str]] = defaultdict(set)
+    s_conf = np.zeros(n)
+    r_conf = np.zeros(n)
+    s_contacts = np.zeros(n)
+    r_contacts = np.zeros(n)
+    pointer = 0
+
+    def activate(account: str) -> None:
+        active.add(account)
+        for other in neighbours.get(account, ()):
+            counted[other].add(account)
+
+    order = np.argsort(minutes, kind="stable")
+    for position in order.tolist():
+        now = minutes[position]
+        while pointer < len(activation) and activation[pointer][0] <= now:
+            activate(activation[pointer][1])
+            pointer += 1
+        sender, receiver = senders[position], receivers[position]
+        s_conf[position] = float(sender in active)
+        r_conf[position] = float(receiver in active)
+        s_contacts[position] = len(counted.get(sender, ()))
+        r_contacts[position] = len(counted.get(receiver, ()))
+        if sender != receiver:
+            neighbours[sender].add(receiver)
+            neighbours[receiver].add(sender)
+            if receiver in active:
+                counted[sender].add(receiver)
+            if sender in active:
+                counted[receiver].add(sender)
+    return pd.DataFrame(
+        {
+            "sender_confirmed": s_conf,
+            "receiver_confirmed": r_conf,
+            "sender_confirmed_contacts": np.log1p(s_contacts),
+            "receiver_confirmed_contacts": np.log1p(r_contacts),
+        },
+        index=context.index,
+    )
 
 
 def _transaction_context(

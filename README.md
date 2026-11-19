@@ -1,187 +1,85 @@
 # Q-FraudGuard
 
-Q-FraudGuard là prototype phát hiện, ưu tiên và xử lý giao dịch gian lận theo
-luồng thời gian thực. AI chấm điểm và lọc ứng viên; các ứng viên trong cùng cửa
-sổ được mô hình hóa thành bài toán QUBO "chọn K hồ sơ điều tra trước", giải bằng
-Simulated Quantum Annealing trên CPU **hoặc trên máy lượng tử annealing D-Wave
-thật** qua Leap.
+Q-FraudGuard chấm điểm giao dịch trên CPU rồi dùng máy tính lượng tử (QPU) để chọn các hồ sơ cần điều tra trước. **Bước chọn hồ sơ đã chạy trên chip siêu dẫn Quafu Haituo. Trên 44/44 cửa sổ thử nghiệm gồm 8–18 ứng viên từ dữ liệu tổng hợp IBM AMLworld, chip đo được phương án có cùng giá trị tối ưu với CPU.** [Kết quả đo trên phần cứng](docs/TRIEN_KHAI_QPU.md)
 
-```text
-Transaction stream
-    → AI scoring (LightGBM + Isolation Forest + graph features + rules)
-    → Candidate filtering (ngưỡng học trên validation)
-    → Cửa sổ ứng viên → QUBO exact-K
-    → Solver: SQA (CPU) | D-Wave QPU | D-Wave Hybrid CQM   (fallback tự động)
-    → Investigation queue → Operator action
-```
+Trong một phiên chạy qua dashboard, hệ thống đọc 64 giao dịch, gom 18 cảnh báo và lưu 4 hồ sơ ưu tiên vào hàng đợi điều tra. Hai trong bốn hồ sơ đó khác với lựa chọn nếu chỉ xếp theo điểm rủi ro. CPU duyệt đủ 3.060 tổ hợp và xác nhận giá trị của phương án chip đo được. [Bản ghi phiên chạy](artifacts/deploy/quafu_dashboard_18_20261118T220101Z.json)
 
-## 1. AI scoring và lọc ứng viên
+## So sánh QPU với CPU
 
-```text
-s_i = α·p_i + β·a_i + γ·g_i + δ·r_i
-```
+Mỗi cửa sổ là một nhóm cảnh báo cần xét cùng lúc. Bài toán tối ưu nhị phân bậc hai (QUBO) chọn đúng K hồ sơ để tối đa hóa tổng điểm rủi ro và phần thưởng cho các hồ sơ chung tài khoản. CPU tính nghiệm chính xác bằng duyệt hết và đối chiếu bằng quy hoạch nguyên hỗn hợp (MILP). QPU đạt cùng chất lượng khi ít nhất một mẫu đo trực tiếp trên chip chọn đúng K và có cùng giá trị mục tiêu, trước bước hậu xử lý trên CPU.
 
-- `p_i`: xác suất LightGBM (huấn luyện với trọng số cân bằng lớp, hiệu chỉnh
-  bằng logistic calibration trên validation).
-- `a_i`: điểm bất thường Isolation Forest, chuẩn hóa theo phân vị 5%–98% của train.
-- `g_i`: điểm graph nhân quả: fan-in, fan-out, thiết bị dùng chung, dòng tiền
-  đi qua, tần suất — chỉ dùng lịch sử trước thời điểm `t`.
-- `r_i`: rule engine (số tiền vượt phân vị 98,5%, rút cạn số dư, lệch số dư…).
-- `α, β, γ, δ`: grid search bước 0,05 trên validation, tối đa hóa tỷ lệ giữ
-  fraud ở mức 5% ứng viên, phá hòa bằng PR-AUC.
+| Cửa sổ AMLworld | QPU đạt tối ưu | CPU chọn K điểm cao nhất | CPU chọn theo điểm rồi đổi chỗ |
+|---|---:|---:|---:|
+| 40 cửa sổ có liên kết, chọn trước khi chạy | 40/40 | 40/40 | 40/40 |
+| 4 cửa sổ chọn riêng vì xếp theo điểm bỏ lỡ nghiệm tối ưu | 4/4 | 0/4 | 4/4 |
 
-> **Lưu ý:** phần graph là *đặc trưng đồ thị theo thời gian* được thiết kế thủ
-> công, **không phải TGNN** (chưa có mạng nơ-ron đồ thị trong project).
+Chip đạt tối ưu ngay lô đầu ở cả 40 cửa sổ chọn trước. Bốn cửa sổ thử thách lần lượt cần 1, 1, 7 và 2 lô ở 8, 12, 15 và 18 qubit. Mỗi lô có 1.024 lần đo. Tổng cộng, 51 tác vụ đo trên các cửa sổ này trả về 52.224 mẫu. [Bản ghi 40 cửa sổ](artifacts/deploy/quafu_verified_hits_8_12_15_18_20261118T212255Z.json) · [Bản ghi 4 cửa sổ thử thách](artifacts/deploy/quafu_ranking_misses_8_12_15_18_20261118T212601Z.json)
 
-## 2. QUBO chọn hồ sơ ưu tiên
+Ở 18 qubit, trên 10 cửa sổ chọn trước, trung vị thời gian từ lúc bắt đầu xử lý đến khi máy khách xác minh nghiệm QPU là **2,83 giây**. CPU lập bài toán và duyệt hết mất **7,73 mili giây** ở trung vị. Mạch dùng một qubit cho mỗi ứng viên. Mục tiêu tiếp theo là thử 24 và 32 ứng viên trên phần cứng phù hợp, giữ cùng giới hạn số lần đo và so sánh thời gian ở cùng chất lượng nghiệm. [Thời gian theo kích thước và thiết kế phép thử tiếp theo](docs/TRIEN_KHAI_QPU.md)
 
-Với `N` ứng viên trong một cửa sổ, `x_i = 1` nếu giao dịch `i` được ưu tiên:
+## Kiểm chứng kết quả trên máy cá nhân
 
-```text
-min  −Σ r_i x_i − c·Σ w_ij x_i x_j + P·(Σ x_i − K)²,   K = round(0,25·N)
-```
-
-- `w_ij = 0,5` khi hai ứng viên dùng chung tài khoản gửi/nhận, `c = 0,25`.
-- `P` được chọn **chặt**: `P > max_i (r_i + c·Σ_j w_ij)`. Điều kiện này đủ để mọi
-  nghiệm tối ưu toàn cục đều thỏa `Σx = K` (có chứng minh trong
-  `qubo.exact_k_penalty_bound` và kiểm thử brute-force). P nhỏ giúp QPU — vốn
-  chuẩn hóa hệ số về dải analog hẹp — vẫn phân biệt được chênh lệch risk.
-- Ràng buộc exact-K làm mọi cặp biến liên kết với nhau (đồ thị đầy đủ), nên trên
-  QPU dùng `DWaveCliqueSampler` với clique embedding (tối đa ~177 biến trên
-  Advantage).
-- Hậu xử lý chung cho mọi backend: chọn mẫu khả thi có năng lượng thấp nhất,
-  sửa mẫu lệch K (nếu không mẫu nào khả thi), rồi local search hoán đổi cặp giữ
-  nguyên K. Năng lượng **trước** hậu xử lý được lưu trong `raw_objective` để
-  đánh giá riêng chất lượng phần cứng.
-
-## 3. Backend giải QUBO
-
-| `QFG_SOLVER` | Chạy ở đâu | Ghi chú |
-|---|---|---|
-| `sqa` (mặc định) | OpenJij SQA, CPU cục bộ | Không cần mạng |
-| `exact` | Duyệt toàn bộ C(N,K), CPU | Ground truth cho benchmark |
-| `dwave-qpu` | **QPU D-Wave thật** (Advantage/Advantage2) | Cần `DWAVE_API_TOKEN` |
-| `dwave-hybrid` | Leap Hybrid CQM (cổ điển + QPU) | Ràng buộc K dạng native, ≥ 5 s/job |
-| `dwave-mock` | `MockDWaveSampler` offline | Chạy đúng code path QPU, **không phải phần cứng lượng tử** |
-
-Với `dwave-qpu`/`dwave-hybrid`, dashboard tự chuyển về SQA khi lỗi mạng, sai
-token, quá kích thước clique hoặc khi vượt `QFG_QPU_BUDGET_SECONDS` (mặc định
-10 s thời gian truy cập QPU mỗi tiến trình). Thẻ **Bộ giải QUBO** hiển thị
-backend thực sự đã dùng, thời gian QPU, ngân sách đã tiêu và lý do fallback.
-
-Dashboard gom ứng viên thành cửa sổ (`QFG_QUANTUM_MIN_BATCH`=8 hoặc sau
-`QFG_QUANTUM_WINDOW_SECONDS`=10 s, tối đa 40) và giải trong luồng nền, nên độ trễ
-mạng của QPU không làm chậm nhịp 1 giây của giao diện. Cột `Ưu tiên QUBO` hiển
-thị trạng thái: chờ batch → đang giải → ưu tiên / không chọn. Cảnh báo được QUBO
-chọn xếp trước trong cùng mức hành động.
-
-## 4. Triển khai lên D-Wave
-
-1. Tạo tài khoản tại <https://cloud.dwavesys.com/leap>. Tài khoản mới có gói
-   trial giới hạn thời gian QPU (kiểm tra điều khoản hiện hành trên Leap).
-2. Cài SDK: `python -m pip install -r requirements-quantum.txt`
-3. Lấy API token trong Leap dashboard, đặt vào `.env`:
-   ```text
-   QFG_SOLVER=dwave-qpu
-   DWAVE_API_TOKEN=<token của bạn>
-   ```
-4. Kiểm tra kết nối và chạy một bài QUBO 8 biến (~10–30 ms QPU):
-   ```powershell
-   python scripts/quantum_check.py --no-run   # chỉ liệt kê solver
-   python scripts/quantum_check.py            # submit 1 job lên QPU
-   ```
-5. Benchmark trên cửa sổ ứng viên PaySim thật (mỗi cửa sổ ~1 lần gọi QPU):
-   ```powershell
-   python scripts/quantum_benchmark.py --solvers exact,sqa,dwave-qpu --windows 10
-   ```
-   Báo cáo JSON lưu trong `artifacts/benchmarks/`, gồm `problem_id` của từng job
-   (xem lại trên D-Wave Inspector / Leap).
-6. Chạy dashboard như mục 7; thẻ **Bộ giải QUBO** phải hiển thị `D-Wave QPU` và
-   tên chip.
-
-Chạy thử toàn bộ đường đi QPU mà không cần token: `QFG_SOLVER=dwave-mock`.
-
-## 5. Kết quả hiện tại và giới hạn
-
-Benchmark 20 cửa sổ × 16 ứng viên từ tập test PaySim (`exact,sqa,dwave-mock`):
-
-| Solver | Tối ưu sau hậu xử lý | Tối ưu thô (trước local search) | Thời gian TB |
-|---|---|---|---|
-| exact | 100% | 100% | 4 ms |
-| sqa | 100% | 10% | 68 ms |
-| dwave-mock | 100% | 0% | 19 ms |
-
-- **Trên PaySim, QUBO không tạo khác biệt so với chọn top-K theo risk**: các ứng
-  viên gần như không bao giờ dùng chung tài khoản (0 cạnh trong cả 20 cửa sổ),
-  nên bài toán suy biến thành sắp xếp. Phần cứng lượng tử ở đây chứng minh khả
-  năng triển khai, không mang lại lợi thế về chất lượng hay tốc độ. Để QUBO có ý
-  nghĩa cần dữ liệu có cấu trúc quan hệ (ví dụ IBM AMLworld, Elliptic).
-- Annealer (SQA, SA, QPU) lật từng bit nên khó di chuyển giữa các nghiệm cùng K;
-  tỷ lệ tối ưu thô thấp là đặc điểm của bài toán, local search khắc phục điều đó.
-- Số liệu `dwave-mock` là mô phỏng; chất lượng trên QPU thật (nhiễu, chain
-  break) cần đo bằng `quantum_benchmark.py` với token thật.
-
-Model hiện tại (test 19.884 giao dịch): PR-AUC 0,876, ROC-AUC 0,968, bắt 59/61
-fraud, precision 6,9% ở 4,3% ứng viên.
-
-## 6. Huấn luyện lại model
+Từ thư mục gốc, chạy một lệnh với Python 3.11 trở lên. Chương trình dùng thư viện chuẩn, đọc điểm ứng viên và tần suất từng chuỗi bit trong các báo cáo đã lưu, rồi tự duyệt mọi cách chọn đúng K. Có thể chạy ngoại tuyến mà không cần tài khoản Quafu.
 
 ```powershell
-python scripts/train.py --output artifacts/models/paysim_lightgbm_scorer.joblib
+python scripts/verify_quafu_evidence.py
 ```
 
-Chia theo thời gian 60/20/20, ghi kèm `paysim_lightgbm_metrics.json`. Lần chạy
-kiểm chứng: PR-AUC 0,881, ROC-AUC 0,978, bắt 59/61 fraud, ~9 giây.
+Hai dòng kết quả cho biết số cửa sổ đạt tối ưu, kết quả của từng cách chọn trên CPU và số mẫu tối ưu trong mỗi tập. [Mã kiểm chứng](scripts/verify_quafu_evidence.py)
 
-## 7. Chạy local
+## Chạy dashboard
 
-Yêu cầu Python 3.11 trở lên.
+Mẫu và mô hình PaySim đi kèm đủ để chạy dashboard trên Windows. Các lệnh dưới dùng PowerShell với Python 3.13. Chế độ `replay` ghi vị trí đã xử lý vào SQLite để lần mở sau tiếp tục cùng luồng.
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements-quantum.txt
-python -m pip install --no-deps -e .
-Copy-Item .env.example .env
+python -m pip install -e .
+$env:QFG_DATASET = "paysim"
+$env:QFG_SOURCE = "replay"
+$env:QFG_PRIORITY_MODE = "risk"
+python -m streamlit run dashboard/app.py --server.address 127.0.0.1 --server.port 8765
 ```
 
-Nạp biến môi trường và khởi động dashboard:
+Mở `http://localhost:8765`. Để chạy trên chip, chuẩn bị luồng AMLworld, môi trường Quafu và token theo hướng dẫn, rồi dùng lệnh dưới đây. Script kiểm tra backend trên hai cửa sổ trước khi mở dashboard với kích thước cửa sổ mục tiêu là 18 ứng viên. [Chuẩn bị dữ liệu AMLworld](data/DATASETS.md) · [Chạy trên Quafu](docs/TRIEN_KHAI_QPU.md)
 
 ```powershell
-Get-Content .env |
-  Where-Object { $_ -and -not $_.StartsWith("#") } |
-  ForEach-Object {
-    $name, $value = $_.Split("=", 2)
-    Set-Item -Path "Env:$name" -Value $value
-  }
-
-python -m streamlit run dashboard/app.py `
-  --server.address $env:STREAMLIT_SERVER_ADDRESS `
-  --server.port $env:STREAMLIT_SERVER_PORT `
-  --server.headless $env:STREAMLIT_SERVER_HEADLESS
+.\scripts\start_qpu_dashboard.ps1 -Solver quafu-fast-qpu -WindowSize 18
 ```
 
-Truy cập `http://localhost:8765`. Kiểm thử: `python -m pytest`.
+## Từ giao dịch đến hàng đợi điều tra
 
-## 8. Cấu trúc project
+| Bước | Kết quả trên tập kiểm tra IBM AMLworld HI-Small |
+|---|---|
+| **Sàng lọc trên CPU** | Trong 1.015.448 giao dịch, mô hình gắn cờ 129.766 giao dịch (12,8%) và giữ được 1.089/1.143 giao dịch rửa tiền (95,3%). [Kết quả theo ngưỡng sàng lọc](artifacts/training/amlworld_full_operating_points.json) |
+| **Chuyển chuyên viên** | Ngưỡng điều tra được chọn để chuyển 2% số giao dịch trên tập xác thực. Khi áp dụng cho tập kiểm tra, 31.407 hồ sơ qua ngưỡng, gồm 925 giao dịch rửa tiền. [Ngưỡng của mô hình](artifacts/models/amlworld_full_scorer.review.json) |
 
-```text
-Q-FraudGuard/
-├── dashboard/app.py              # Streamlit: stream, cảnh báo, cửa sổ QUBO nền
-├── src/qf_guard/
-│   ├── data.py, features.py      # chuẩn hóa, đặc trưng nhân quả + graph
-│   ├── scoring.py, training.py   # RiskScorer (fit/score), huấn luyện + đánh giá
-│   ├── qubo.py                   # QUBOModel, builder, penalty chặt, to_bqm
-│   ├── prioritization.py         # ứng viên → cạnh → QUBO → lựa chọn
-│   ├── solvers.py                # exact, SQA, D-Wave QPU/hybrid/mock, fallback
-│   ├── postprocess.py            # chọn mẫu, sửa exact-K, swap local search
-│   └── explainability.py         # mã lý do, khuyến nghị xử lý
-├── scripts/                      # train.py, quantum_check.py, quantum_benchmark.py
-├── tests/                        # pytest
-├── data/                         # paysim.csv, DATASETS.md
-└── artifacts/models/             # model đã huấn luyện + metrics
+Hai ngưỡng trên thuộc tầng chấm điểm. Ở bước ưu tiên, `QFG_PRIORITY_MODE=risk` xếp hồ sơ theo điểm, còn `QFG_PRIORITY_MODE=qubo` gửi từng cửa sổ ứng viên cho bộ giải ở luồng nền. Dashboard ghi bộ giải thực sự đã trả kết quả. Chuyên viên có thể xem cả ứng viên dưới ngưỡng điều tra và ghi quyết định cho từng hồ sơ. [Luồng sự kiện và hàng đợi](src/qf_guard/operations.py)
+
+### Nhận sự kiện JSONL
+
+Sau khi đã chuẩn bị mô hình AMLworld, có thể nhập giao dịch theo thứ tự thời gian. Mỗi dòng chứa `transaction_id`, `timestamp`, `sender_id`, `receiver_id` và `amount`. Gửi lại cùng mã với cùng nội dung chỉ ghi một giao dịch. Khi đổi mô hình hoặc ngưỡng, dùng tên luồng mới.
+
+```powershell
+$env:QFG_DATASET = "amlworld_full"
+$env:QFG_SOURCE = "live"
+$env:QFG_STREAM = "pilot-aml-v1"
+$env:QFG_MODEL_PATH = "artifacts/models/amlworld_full_scorer.joblib"
+python scripts/stream.py ingest --input events.jsonl
+python scripts/stream.py decisions --after 0 --limit 100
 ```
 
-Thông tin về PaySim, Elliptic, Bank Account Fraud Suite và IBM AMLworld được lưu
-trong `data/DATASETS.md`.
+Dashboard và tiến trình nhập dùng chung `QFG_STREAM` và `QFG_CASE_DB`. SQLite mặc định nằm ở `artifacts/operations.sqlite3`. Nhật ký quyết định lưu người xử lý, hành động và thời gian UTC. Hệ thống nghiệp vụ có thể đọc tiếp từ ID cuối cùng đã nhận. [Cấu hình](.env.example)
+
+## Tài liệu và mã nguồn
+
+- Kết quả huấn luyện trên mẫu AMLworld bốn ngày ghi lại cách chọn mô hình chấm điểm trên CPU. [Báo cáo huấn luyện](artifacts/training/amlworld_training_report.md)
+- Hàm mục tiêu và chứng nhận MILP nằm trong [prioritization.py](src/qf_guard/prioritization.py). Mạch và ánh xạ qubit nằm trong [quafu.py](src/qf_guard/quafu.py).
+- Nguồn của bộ dữ liệu và điều khoản phân phối bản trích nằm trong [danh mục giấy phép](data/licenses/LICENSES.md).
+
+Để chạy toàn bộ bộ kiểm thử trong môi trường đã kích hoạt, cài thêm Qiskit cho mô phỏng Quafu và D-Wave Ocean cho mô phỏng annealer. Các kiểm thử chạy cục bộ.
+
+```powershell
+python -m pip install -e ".[dev,quantum]" qiskit==2.4.2
+python -m pytest -q
+```

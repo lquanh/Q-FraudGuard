@@ -34,6 +34,20 @@ artifacts/*
 artifacts/models/*
 !artifacts/models/paysim_lightgbm_scorer.joblib
 !artifacts/models/paysim_realtime_metrics.json
+!artifacts/models/*.review.json
+
+# Published evidence. Additional runs, checkpoints and operating databases stay local.
+!artifacts/deploy/
+artifacts/deploy/*
+!artifacts/deploy/quafu_verified_hits_8_12_15_18_20261118T212255Z.json
+!artifacts/deploy/quafu_ranking_misses_8_12_15_18_20261118T212601Z.json
+!artifacts/deploy/quafu_dashboard_18_20261118T220101Z.json
+!artifacts/deploy/qpu_check_quafu-anneal-qpu_20261118T204034Z.json
+!artifacts/training/
+artifacts/training/*
+!artifacts/training/amlworld_full_operating_points.json
+!artifacts/training/amlworld_training_report.md
+!artifacts/training/amlworld_training_report.json
 
 # Downloaded research datasets; keep the runtime PaySim file tracked
 data/downloads/*
@@ -42,3 +56,9 @@ data/paysim_full/
 data/elliptic/
 data/bank_account_fraud/
 data/ibm_amlworld/
+
+# Reproducible dataset samples (see scripts/prepare_amlworld.py)
+data/amlworld_*.csv
+
+# Isolated environments, including the Quafu SDK
+.venv-*/

@@ -1,4 +1,4 @@
-"""Reproducible offline training for the realtime PaySim risk scorer."""
+"""Reproducible offline training for the realtime risk scorer (PaySim or AMLworld)."""
 
 from __future__ import annotations
 
@@ -31,22 +31,28 @@ def train_and_evaluate(
     frame: pd.DataFrame,
     *,
     target_candidate_rate: float = .05,
+    review_rate: float = .02,
     random_state: int = 42,
+    dataset_name: str = "paysim",
 ) -> tuple[RiskScorer, dict[str, Any]]:
     from sklearn.metrics import average_precision_score, roc_auc_score
 
     started = perf_counter()
     train, validation, test = temporal_split(frame)
     config = replace(
-        ScoringConfig(), target_candidate_rate=target_candidate_rate, random_state=random_state
+        ScoringConfig(), target_candidate_rate=target_candidate_rate, review_rate=review_rate,
+        random_state=random_state
     )
     scorer = RiskScorer(config).fit(train, validation)
     scored = scorer.score(test)
     labels = scored["is_fraud"].to_numpy()
     candidates = scored["is_candidate"].to_numpy()
     detected = int((candidates & (labels == 1)).sum())
+    reviews = scored["manual_review"].to_numpy()
+    review_hits = int(labels[reviews].sum())
     metrics: dict[str, Any] = {
-        "mode": "normal_temporal_paysim_lightgbm",
+        "mode": f"normal_temporal_{dataset_name}_lightgbm",
+        "dataset": dataset_name,
         "rows": int(len(train) + len(validation) + len(test)),
         "target_candidate_rate": target_candidate_rate,
         "split_rows": [len(train), len(validation), len(test)],
@@ -62,6 +68,10 @@ def train_and_evaluate(
         "test_candidate_rate": float(np.mean(candidates)),
         "test_fraud_detected": detected,
         "test_false_alerts": int(candidates.sum() - detected),
+        "test_manual_reviews": int(reviews.sum()),
+        "test_manual_review_hits": review_hits,
+        "test_manual_review_precision": review_hits / max(1, int(reviews.sum())),
+        "test_manual_review_recall": review_hits / max(1, int(labels.sum())),
         "runtime_seconds": perf_counter() - started,
     }
     return scorer, metrics

@@ -1,4 +1,4 @@
-"""QUBO solver backends: exact CPU, OpenJij SQA, D-Wave QPU and D-Wave hybrid.
+"""QUBO solver backends: exact CPU, OpenJij SQA, D-Wave QPU / hybrid and Quafu-SQC QPU.
 
 Every backend returns a :class:`~qf_guard.results.SolverResult` whose
 ``metadata`` always contains ``solver``, ``backend`` and ``hardware`` so the
@@ -135,6 +135,7 @@ class DWaveQPUSolver:
     label_prefix: str = "qf-guard"
     local_search: bool = True
     sampler: Any = None
+    backend_name: str = "dwave-qpu"
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def _get_sampler(self) -> Any:
@@ -186,7 +187,7 @@ class DWaveQPUSolver:
             local_search=self.local_search,
             metadata={
                 "solver": "dwave_qpu",
-                "backend": "dwave-qpu",
+                "backend": self.backend_name,
                 "hardware": _solver_name(sampler),
                 "num_reads": self.num_reads,
                 "annealing_time_us": self.annealing_time,
@@ -299,17 +300,25 @@ class FallbackSolver:
         )
 
     def solve(self, model: QUBOModel) -> SolverResult:
+        return self.solve_measurement(model, 0)
+
+    def solve_measurement(self, model: QUBOModel, attempt_index: int) -> SolverResult:
         with self._lock:
             reason = "qpu_budget_exhausted" if self.budget_exhausted else None
             if reason is None:
                 try:
-                    result = self.primary.solve(model)
+                    if attempt_index and hasattr(self.primary, "solve_measurement"):
+                        result = self.primary.solve_measurement(model, attempt_index)
+                    else:
+                        result = self.primary.solve(model)
                 except Exception as exc:  # network, auth, embedding, quota ...
                     reason = f"{type(exc).__name__}: {exc}"[:300]
                 else:
                     self.primary_calls += 1
+                    meta = result.metadata
                     self.qpu_seconds_used += (
-                        float(result.metadata.get("qpu_access_time_us") or 0.0) / 1e6
+                        float(meta.get("qpu_access_time_us") or 0.0) / 1e6
+                        or float(meta.get("server_time_s") or 0.0)
                     )
                     self.last_error = None
                     return result
@@ -361,7 +370,11 @@ def mock_qpu_sampler(pegasus_shape: int = 16) -> Any:
         return clique.DWaveCliqueSampler()
 
 
-SOLVER_NAMES = ("sqa", "exact", "dwave-qpu", "dwave-hybrid", "dwave-mock")
+SOLVER_NAMES = (
+    "sqa", "exact", "dwave-qpu", "dwave-hybrid", "dwave-mock",
+    "quafu-qpu", "quafu-mock", "quafu-anneal-qpu", "quafu-anneal-mock", "quafu-fast-qpu", "quafu-fast-mock",
+)
+QPU_FAMILIES = ("dwave", "quafu")
 
 
 def _float_env(env: Mapping[str, str], key: str, default: float | None) -> float | None:
@@ -392,24 +405,65 @@ def build_solver(name: str, env: Mapping[str, str] | None = None) -> Solver:
             num_reads=int(_float_env(env, "QFG_QPU_NUM_READS", 100) or 100),
             sampler=mock_qpu_sampler(),
             label_prefix="qf-guard-mock",
+            backend_name="dwave-mock",
         )
     if key == "dwave-hybrid":
         return DWaveHybridCQMSolver(
             time_limit=_float_env(env, "QFG_HYBRID_TIME_LIMIT_S", None), token=token
         )
+    if key in SOLVER_NAMES and key.startswith("quafu-"):
+        from qf_guard.quafu import LocalSimulatorClient, QuafuCircuitSolver, read_token
+
+        mock = key.endswith("-mock")
+        anneal = key.startswith("quafu-anneal-")
+        fast = key.startswith("quafu-fast-")
+        variant = env.get("QFG_QUAFU_FAST_CIRCUIT", "local").strip().lower()
+        if fast and variant not in ("full", "paired", "local"):
+            raise ValueError("QFG_QUAFU_FAST_CIRCUIT must be full, paired or local")
+        if anneal:
+            steps = int(env.get("QFG_QUAFU_ANNEAL_STEPS", "").strip() or "3")
+            duration = float(env.get("QFG_QUAFU_ANNEAL_DURATION", "").strip() or "2.0")
+            if steps < 1 or not np.isfinite(duration) or duration <= 0:
+                raise ValueError("invalid digital annealing schedule")
+        else:
+            steps = int(_float_env(env, "QFG_QAOA_LAYERS", 3) or 3)
+            duration = 2.0
+        return QuafuCircuitSolver(
+            chip=env.get("QFG_QUAFU_CHIP", "").strip() or "Haituo",
+            backup_chip=env.get("QFG_QUAFU_BACKUP_CHIP", "Baihua").strip() or None,
+            shots=1024 if fast else int(_float_env(env, "QFG_QUAFU_SHOTS", 2048) or 2048),
+            layers=1 if fast else steps,
+            max_qubits=(int(env.get("QFG_QUAFU_FAST_MAX_QUBITS", "") or 18) if fast
+                        else int(_float_env(env, "QFG_QUAFU_MAX_QUBITS", 12) or 12)),
+            token=None if mock else read_token(env),
+            backend_name=key,
+            digital_annealing=anneal,
+            anneal_duration=duration,
+            fast_xy=fast,
+            fast_variant=variant,
+            readout_correction=not fast,
+            poll_seconds=0.2 if fast else 2.0,
+            client=LocalSimulatorClient() if mock else None,
+        )
     raise ValueError(f"unknown solver {name!r}; choose one of {', '.join(SOLVER_NAMES)}")
 
 
 def solver_from_env(env: Mapping[str, str] | None = None) -> Solver:
-    """Solver selected by ``QFG_SOLVER``; D-Wave backends fall back to SQA by default."""
+    """Solver selected by ``QFG_SOLVER``; QPU backends fall back to SQA by default.
+
+    The QPU budget counts D-Wave QPU access time, or Quafu-SQC server time per task
+    (default 10 s for D-Wave, 600 s for Quafu, whose tasks take about 1 s each).
+    """
 
     env = os.environ if env is None else env
     name = env.get("QFG_SOLVER", "sqa").strip().lower() or "sqa"
     solver = build_solver(name, env)
-    if not name.startswith("dwave") or env.get("QFG_SOLVER_FALLBACK", "sqa") == "none":
+    if not name.startswith(QPU_FAMILIES) or env.get("QFG_SOLVER_FALLBACK", "sqa") == "none":
         return solver
     return FallbackSolver(
         primary=solver,
         fallback=build_solver(env.get("QFG_SOLVER_FALLBACK", "sqa"), env),
-        qpu_budget_seconds=_float_env(env, "QFG_QPU_BUDGET_SECONDS", 10.0),
+        qpu_budget_seconds=_float_env(
+            env, "QFG_QPU_BUDGET_SECONDS", 600.0 if name.startswith("quafu") else 10.0
+        ),
     )

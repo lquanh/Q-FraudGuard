@@ -16,8 +16,8 @@ def repair_exact_k(model: QUBOModel, sample: np.ndarray) -> np.ndarray:
 
     Each step flips the single variable that lowers the QUBO energy the most
     among the flips that move the selection count towards ``k``.  Hardware
-    noise and broken chains occasionally return ``k±1`` selections; this keeps
-    those reads usable while reporting that a repair happened.
+    reads (for example with broken chains) can return ``k±1`` selections; this
+    keeps those reads usable while reporting that a repair happened.
     """
 
     current = model.validate_sample(sample).astype(np.int8)

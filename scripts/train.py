@@ -1,7 +1,10 @@
-"""Train the realtime risk scorer on PaySim with a chronological 60/20/20 split.
+"""Train the realtime risk scorer with a chronological 60/20/20 split.
 
 Usage:
     python scripts/train.py --output artifacts/models/paysim_lightgbm_scorer.joblib
+    python scripts/prepare_amlworld.py
+    python scripts/train.py --data data/amlworld_hi_small.csv --dataset-name amlworld \\
+        --output artifacts/models/amlworld_lightgbm_scorer.joblib
 """
 
 from __future__ import annotations
@@ -25,13 +28,17 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True, help="joblib model path")
     parser.add_argument("--metrics", type=Path, help="metrics JSON (default: next to model)")
     parser.add_argument("--target-candidate-rate", type=float, default=.05)
+    parser.add_argument("--review-rate", type=float, default=.02, help="manual review fraction on validation")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--dataset-name", default="paysim", help="label stored in the metrics")
     args = parser.parse_args()
 
     scorer, metrics = train_and_evaluate(
         pd.read_csv(args.data),
         target_candidate_rate=args.target_candidate_rate,
+        review_rate=args.review_rate,
         random_state=args.seed,
+        dataset_name=args.dataset_name,
     )
     scorer.save(args.output)
     metrics_path = args.metrics or args.output.with_name(

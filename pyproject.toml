@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "qf-guard"
 version = "0.1.0"
-description = "Realtime fraud scoring with QUBO investigation prioritisation on SQA or D-Wave quantum annealers"
+description = "Fraud scoring and QUBO investigation prioritisation with CPU, Quafu and D-Wave backends"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

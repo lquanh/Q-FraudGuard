@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
-import copy
 from html import escape
 from math import ceil, cos, pi, sin
 import os
 from pathlib import Path
-import random
+import sqlite3
 import sys
-from time import monotonic, perf_counter
+from time import perf_counter
 from typing import Any, Mapping
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -21,31 +20,82 @@ import pandas as pd
 import streamlit as st
 
 from qf_guard.data import normalize_transactions
-from qf_guard.explainability import recommended_treatment
-from qf_guard.prioritization import PrioritySelection, select_priority
-from qf_guard.runtime import RealtimeService
-from qf_guard.scoring import RiskScorer
+from qf_guard.operations import CaseStore, EventProcessor
+from qf_guard.prioritization import PriorityConfig, PrioritySelection, select_priority
+from qf_guard.quafu import sampling_time_estimate
 from qf_guard.solvers import FallbackSolver, solver_from_env
 
 RED = "#d92d4f"
 MAX_VISIBLE_ALERTS = 30
-MAX_PENDING_ALERTS = 500
-REALTIME_HISTORY_LIMIT = 5_000
 GRAPH_HISTORY_LIMIT = 2_000
+QUANTUM_HISTORY_LIMIT = 500
+# QFG_DATASET picks the stream and its scorer.  AMLworld (synthetic, IBM) keeps
+# account identities, so candidates in a window share accounts and the QUBO
+# has real pairwise terms; PaySim candidates almost never do.
+DATASETS = {
+    "paysim": ("PaySim (mô phỏng)", "paysim.csv", "paysim_lightgbm_scorer.joblib",
+               "python scripts/train.py --output artifacts/models/paysim_lightgbm_scorer.joblib"),
+    "amlworld": ("IBM AMLworld HI-Small (tổng hợp)", "amlworld_hi_small.csv",
+                 "amlworld_lightgbm_scorer.joblib",
+                 "python scripts/prepare_amlworld.py && python scripts/train.py --data "
+                 "data/amlworld_hi_small.csv --dataset-name amlworld --output "
+                 "artifacts/models/amlworld_lightgbm_scorer.joblib"),
+    # new scorer (4 days, confirmed-account list, no payment format, chosen on
+    # validation); its stream (last 20% of the 4-day sample) is its untouched test period
+    "amlworld_tuned": ("IBM AMLworld HI-Small 4 ngày · model mới (tổng hợp)",
+                       "amlworld_hi_small_4d.csv", "amlworld_noformat_tuned_scorer.joblib",
+                       "python scripts/prepare_amlworld.py --days 4 --output "
+                       "data/amlworld_hi_small_4d.csv && python scripts/train_amlworld.py "
+                       "--exclude-groups formats --output "
+                       "artifacts/models/amlworld_noformat_tuned_scorer.joblib"),
+    # trained on all normal days of HI-Small; threshold set for >= 95% recall; the
+    # stream file holds its untouched test period (rows with split == "stream")
+    "amlworld_full": ("IBM AMLworld HI-Small toàn bộ · ngưỡng bắt ≥ 95% (tổng hợp)",
+                      "amlworld_hi_small_full_stream.csv", "amlworld_full_scorer.joblib",
+                      "python scripts/train_amlworld_full.py --target-recall 0.96 "
+                      "--stream-output data/amlworld_hi_small_full_stream.csv"),
+}
+DATASET = os.environ.get("QFG_DATASET", "amlworld_full").strip().lower()
+DATASET_LABEL, DATA_FILE, MODEL_FILE, PREPARE_HINT = DATASETS.get(
+    DATASET, (DATASET, "", "", f"QFG_DATASET phải là một trong: {', '.join(DATASETS)}")
+)
 MODEL_PATH = Path(
-    os.environ.get(
-        "QFG_MODEL_PATH",
-        PROJECT_ROOT / "artifacts" / "models" / "paysim_lightgbm_scorer.joblib",
-    )
+    os.environ.get("QFG_MODEL_PATH", PROJECT_ROOT / "artifacts" / "models" / MODEL_FILE)
+)
+STREAM_PATH = PROJECT_ROOT / "data" / DATA_FILE
+SOURCE_MODE = os.environ.get("QFG_SOURCE", "replay").strip().lower()
+STREAM_NAME = os.environ.get("QFG_STREAM") or f"{SOURCE_MODE}-{DATASET}"
+CASE_DB = Path(os.environ.get("QFG_CASE_DB") or PROJECT_ROOT / "artifacts" / "operations.sqlite3")
+CONFIGURED_SOLVER = os.environ.get("QFG_SOLVER", "").strip().lower()
+REQUIRE_MEASURED_OPTIMUM = CONFIGURED_SOLVER.startswith("quafu-fast-")
+DEFAULT_POLICY = "qubo" if CONFIGURED_SOLVER not in ("", "sqa") else "risk"
+PRIORITY_MODE = os.environ.get("QFG_PRIORITY_MODE", DEFAULT_POLICY).strip().lower()
+# AMLworld validation settings. Each shared-account pair adds 0.01 * 0.5 after scaling.
+PRIORITY_CONFIG = PriorityConfig(
+    connectivity_strength=float(os.environ.get("QFG_CONNECTIVITY_STRENGTH", "0.01")),
+    risk_normalization=os.environ.get("QFG_RISK_NORMALIZATION", "max").strip().lower() or "max",
 )
 # Candidates are grouped into windows so each QPU call carries a meaningful
 # QUBO and the per-call network latency does not throttle the 1 s UI tick.
-QUANTUM_MIN_BATCH = int(os.environ.get("QFG_QUANTUM_MIN_BATCH", "8"))
-QUANTUM_MAX_BATCH = int(os.environ.get("QFG_QUANTUM_MAX_BATCH", "40"))
+QUAFU_BATCH_SIZE = "18" if REQUIRE_MEASURED_OPTIMUM else "8"
+QUANTUM_MIN_BATCH = int(os.environ.get("QFG_QUANTUM_MIN_BATCH", QUAFU_BATCH_SIZE))
+QUANTUM_MAX_BATCH = int(
+    os.environ.get(
+        "QFG_QUANTUM_MAX_BATCH",
+        QUAFU_BATCH_SIZE if CONFIGURED_SOLVER.startswith("quafu") else "40",
+    )
+)
 QUANTUM_WINDOW_SECONDS = float(os.environ.get("QFG_QUANTUM_WINDOW_SECONDS", "10"))
 BACKEND_LABELS = {
     "dwave-qpu": "D-Wave QPU",
+    "dwave-mock": "D-Wave (mô phỏng cục bộ)",
     "dwave-hybrid": "D-Wave Hybrid",
+    "quafu-qpu": "Quafu QPU",
+    "quafu-mock": "Quafu (mô phỏng cục bộ)",
+    "quafu-anneal-qpu": "Quafu QPU · Ủ lượng tử số hóa",
+    "quafu-anneal-mock": "Quafu mô phỏng · Ủ lượng tử số hóa",
+    "quafu-fast-qpu": "Quafu QPU · Khởi tạo theo rủi ro",
+    "quafu-fast-mock": "Quafu mô phỏng · Khởi tạo theo rủi ro",
     "cpu-simulated-quantum-annealing": "SQA (CPU)",
     "cpu-exhaustive": "Exact (CPU)",
     "none": "Không cần giải (K = N)",
@@ -159,10 +209,19 @@ st.markdown(
 
 
 @st.cache_resource(show_spinner=False)
-def scorer_template() -> RiskScorer:
-    if not MODEL_PATH.is_file():
-        raise FileNotFoundError(f"Không tìm thấy model: {MODEL_PATH}")
-    return RiskScorer.load(MODEL_PATH)
+def case_store(path: Path, name: str) -> CaseStore:
+    return CaseStore(path, name)
+
+
+def ledger() -> CaseStore:
+    return case_store(CASE_DB, STREAM_NAME)
+
+
+@st.cache_resource(show_spinner=False)
+def replay_processor(path: Path, database: Path, name: str) -> EventProcessor:
+    if not path.is_file():
+        raise FileNotFoundError(f"Không tìm thấy model: {path}. Tạo bằng: {PREPARE_HINT}")
+    return EventProcessor.load(case_store(database, name), path)
 
 
 @st.cache_resource(show_spinner=False)
@@ -177,18 +236,17 @@ def quantum_executor() -> ThreadPoolExecutor:
     return ThreadPoolExecutor(max_workers=1, thread_name_prefix="qfg-quantum")
 
 
-def service() -> RealtimeService:
-    """Per-session service: each browser session keeps its own feature history."""
-
-    return st.session_state["qfg_service"]
-
-
-@st.cache_data(show_spinner=False)
-def realtime_source() -> pd.DataFrame:
-    source = PROJECT_ROOT / "data" / "paysim.csv"
-    if not source.is_file():
-        raise FileNotFoundError(f"Không tìm thấy nguồn luồng: {source}")
-    return normalize_transactions(pd.read_csv(source))
+@st.cache_resource(show_spinner=False)
+def realtime_source(path: Path) -> tuple[pd.DataFrame, int]:
+    if DATASET not in DATASETS:
+        raise ValueError(PREPARE_HINT)
+    if not path.is_file():
+        raise FileNotFoundError(f"Không tìm thấy nguồn luồng: {path}. Tạo bằng: {PREPARE_HINT}")
+    data = normalize_transactions(pd.read_csv(path))
+    boundary = int(len(data) * .8)
+    if "split" in data and data["split"].eq("stream").any():
+        boundary = int(data["split"].eq("stream").to_numpy().argmax())
+    return data, boundary
 
 
 def metric_card(label: str, value: str, note: str, css_class: str = "") -> None:
@@ -646,54 +704,42 @@ def suspicious_graph(
 
 
 def initialize_stream() -> None:
-    data = realtime_source()
-    scorer = copy.deepcopy(scorer_template())
-    threshold = scorer.validation_stats_.get("operational_candidate_threshold")
-    if threshold is not None:
-        scorer.candidate_threshold_ = float(threshold)
-    boundary = max(1, int(len(data) * .8))
-    scorer.history_transactions_ = scorer._feature_history(
-        data.iloc[max(0, boundary - REALTIME_HISTORY_LIMIT) : boundary]
-    )
-    st.session_state["qfg_service"] = RealtimeService.from_scorer(scorer)
-    graph_source = data.iloc[max(0, boundary - GRAPH_HISTORY_LIMIT) : boundary]
-    graph_rows = [
-        {
-            "Mã giao dịch": str(row.transaction_id),
-            "Thời gian": row.timestamp,
-            "Người gửi": str(row.sender_id),
-            "Người nhận": str(row.receiver_id),
-            "Loại": str(row.type),
-            "Số tiền": float(row.amount),
-            "Ứng viên": False,
-        }
-        for row in graph_source.itertuples(index=False)
-    ]
+    if SOURCE_MODE not in ("live", "replay") or PRIORITY_MODE not in ("risk", "qubo"):
+        raise ValueError("QFG_SOURCE: live/replay; QFG_PRIORITY_MODE: risk/qubo")
+    if PRIORITY_MODE == "qubo" and not (0 < QUANTUM_MIN_BATCH <= QUANTUM_MAX_BATCH and QUANTUM_WINDOW_SECONDS >= 0):
+        raise ValueError("Cấu hình kích thước hoặc thời gian cửa sổ QUBO không hợp lệ")
+    ledger()
+    if SOURCE_MODE == "replay":
+        realtime_source(STREAM_PATH)
+        replay_processor(MODEL_PATH, CASE_DB, STREAM_NAME)
     st.session_state.update(
-        stream_cursor=boundary,
-        stream_start=boundary,
-        stream_processed=0,
-        stream_candidates=0,
-        stream_fraud_seen=0,
-        stream_fraud_detected=0,
-        stream_cycles=0,
-        stream_sequence=0,
-        stream_rows=[],
-        graph_rows=graph_rows,
-        stream_latency=[],
-        fraud_alerts=[],
-        alerts_overflow=0,
-        graph_dialog_alert_id=None,
-        alerts_panel_hidden=False,
-        quantum_pending=[],
-        quantum_window_started=None,
-        quantum_future=None,
-        quantum_batch_ids=(),
-        quantum_status={},
-        quantum_last=None,
-        quantum_runs=0,
-        qfg_error=None,
+        stream_ready=True, stream_latency=[], fraud_alerts=[], alerts_panel_hidden=False,
+        graph_dialog_alert_id=None, quantum_future=None, quantum_last=None,
+        quantum_history=[], quantum_runs=0,
     )
+
+
+def display_record(event):
+    return {
+        "Thời gian": pd.Timestamp(event["timestamp"]), "Mã giao dịch": event["transaction_id"],
+        "Người gửi": event["sender_id"], "Người nhận": event["receiver_id"],
+        "Loại": event["type"], "Số tiền": event["amount"], "Risk": event.get("risk_score", 0.),
+        "Supervised": event.get("supervised_score", 0.), "Anomaly": event.get("anomaly_score", 0.),
+        "Graph": event.get("graph_score", 0.), "Rule": event.get("rule_score", 0.),
+        "Ứng viên": event.get("is_candidate", False), "Nhãn fraud": event.get("is_fraud"),
+        "Lý do": event.get("reason_codes", ""), "priority_status": event.get("priority_status"),
+        "manual_review": event.get("manual_review", False),
+        "recommended_action": event.get("recommended_action"), "action_detail": event.get("action_detail"),
+    }
+
+
+def graph_history(txid):
+    history = ledger().recent(GRAPH_HISTORY_LIMIT, through=txid)
+    missing = GRAPH_HISTORY_LIMIT - len(history)
+    if missing and SOURCE_MODE == "replay":
+        data, boundary = realtime_source(STREAM_PATH)
+        history = data.iloc[max(0, boundary - missing):boundary].to_dict("records") + history
+    return [display_record(row) for row in history]
 
 
 def skip_tick() -> None:
@@ -713,15 +759,12 @@ def reopen_alerts() -> None:
 def execute_alert(alert_id: str, choices: Mapping[str, str]) -> None:
     selected = st.session_state.get(f"selected_action_{alert_id}")
     action = choices.get(str(selected), next(iter(choices.values())))
-    st.session_state["fraud_alerts"] = [
-        item
-        for item in st.session_state.get("fraud_alerts", [])
-        if str(item["Mã giao dịch"]) != alert_id
-    ]
-    st.session_state.setdefault("alert_actions", []).append(
-        {"transaction_id": alert_id, "action": action}
+    # Local operator identity can be supplied by the deployment or Streamlit login.
+    actor = st.user.get("email") or os.environ.get("QFG_OPERATOR") or "local-operator"
+    recorded = ledger().decide(alert_id, action, actor)
+    st.session_state["action_notice"] = (
+        f"Đã lưu quyết định cho {alert_id}" if recorded else f"{alert_id} đã được xử lý"
     )
-    st.session_state["action_success"] = alert_id
     skip_tick()
 
 
@@ -755,7 +798,7 @@ def render_graph_dialog(alert_id: str) -> None:
         st.markdown(
             suspicious_graph(
                 alert,
-                st.session_state.get("graph_rows", []),
+                graph_history(alert_id),
                 st.session_state.get("fraud_alerts", []),
             ),
             unsafe_allow_html=True,
@@ -765,26 +808,15 @@ def render_graph_dialog(alert_id: str) -> None:
         st.rerun(scope="app")
 
 
-def alert_sort_key(item: Mapping[str, object]) -> tuple[int, bool, float]:
-    status = st.session_state.get("quantum_status", {})
-    return (
-        int(item["action_priority"]),
-        status.get(str(item["Mã giao dịch"])) == "selected",
-        float(item["Risk"]),
-    )
 
 
-def sort_alerts() -> None:
-    alerts = sorted(st.session_state["fraud_alerts"], key=alert_sort_key, reverse=True)
-    overflow = max(0, len(alerts) - MAX_PENDING_ALERTS)
-    st.session_state["alerts_overflow"] += overflow
-    st.session_state["fraud_alerts"] = alerts[:MAX_PENDING_ALERTS]
-
-
-def summarize_selection(selection: PrioritySelection) -> dict[str, object]:
+def summarize_selection(
+    selection: PrioritySelection, batch: list[Mapping[str, object]] | None = None
+) -> dict[str, object]:
     meta = dict(selection.metadata)
     result = selection.result
-    return {
+    cert = dict(selection.certificate or {})
+    summary: dict[str, object] = {
         "backend": meta.get("backend", "none"),
         "hardware": meta.get("hardware", ""),
         "n": len(selection.transaction_ids),
@@ -792,168 +824,95 @@ def summarize_selection(selection: PrioritySelection) -> dict[str, object]:
         "edges": len(selection.edges),
         "runtime_ms": (result.runtime * 1000) if result else 0.0,
         "qpu_access_ms": float(meta.get("qpu_access_time_us") or 0.0) / 1000,
+        "server_time_s": meta.get("server_time_s"),
+        "task_id": meta.get("task_id"),
         "fallback_reason": meta.get("fallback_reason"),
         "problem_id": meta.get("problem_id"),
         "feasible": bool(result.feasible) if result else True,
+        "certified": bool(cert.get("certified")),
+        "matches_optimum": cert.get("matches_optimum"),
+        "raw_matches_optimum": cert.get("raw_matches_optimum"),
+        "final_gap": cert.get("final_gap"),
+        "raw_gap": cert.get("raw_gap"),
+        "certify_ms": cert.get("certify_ms"),
+        "measured_hit": cert.get("measured_hit"),
+        "optimal_reads": cert.get("optimal_reads"),
+        "measured_reads": cert.get("measured_reads"),
+        "time_to_first_hit_s": cert.get("time_to_first_hit_s"),
     }
+    if batch and selection.k < len(batch):
+        # classical reference: the K highest risk scores in the same window
+        by_risk = sorted(range(len(batch)), key=lambda i: -float(batch[i]["risk_score"]))
+        top_ids = {str(batch[i]["transaction_id"]) for i in by_risk[: selection.k]}
+        summary["differs_from_topk"] = top_ids != set(selection.selected_ids)
+        if all(c.get("is_fraud") is not None for c in batch):
+            fraud = {str(c["transaction_id"]): int(c["is_fraud"]) for c in batch}
+            summary.update(fraud_selected=sum(fraud[i] for i in selection.selected_ids),
+                           fraud_topk=sum(fraud[i] for i in top_ids))
+    return summary
 
 
-def advance_quantum() -> None:
-    """Collect a finished QUBO window, then submit the next one if it is due."""
+def solve_window(store, lease, batch, solver):
+    try:
+        selection = select_priority(batch, solver, PRIORITY_CONFIG, name=f"window_{lease}", certify_optimum=True,
+                                    max_measurement_jobs=None if REQUIRE_MEASURED_OPTIMUM else 3)
+        if REQUIRE_MEASURED_OPTIMUM and selection.result is not None:
+            primary_hit = (selection.metadata.get("backend") == CONFIGURED_SOLVER
+                           and not selection.metadata.get("fallback_reason")
+                           and (selection.certificate or {}).get("measured_hit"))
+            if not primary_hit:
+                raise RuntimeError(selection.metadata.get("fallback_reason") or "Chưa nhận được mẫu đo tối ưu từ bộ giải đã chọn")
+    except Exception:
+        store.finish_window(lease, None)
+        raise
+    store.finish_window(lease, selection.selected_ids)
+    return summarize_selection(selection, batch)
 
-    status: dict[str, str] = st.session_state["quantum_status"]
-    future = st.session_state["quantum_future"]
+
+def advance_quantum(*, flush=False):
+    state = st.session_state
+    future = state["quantum_future"]
     if future is not None:
         if not future.done():
             return
-        st.session_state["quantum_future"] = None
-        ids = st.session_state["quantum_batch_ids"]
+        state["quantum_future"] = None
         try:
-            selection = future.result()
-        except Exception as exc:  # solver errors must not stop the stream
-            for transaction_id in ids:
-                status[transaction_id] = "error"
-            st.session_state["quantum_last"] = {
-                "backend": "error",
-                "fallback_reason": f"{type(exc).__name__}: {exc}"[:300],
-            }
+            summary = future.result()
+        except Exception as exc:
+            summary = {"backend": "error", "fallback_reason": f"{type(exc).__name__}: {exc}"[:300]}
         else:
-            for transaction_id in ids:
-                status[transaction_id] = (
-                    "selected" if transaction_id in selection.selected_ids else "not_selected"
-                )
-            st.session_state["quantum_last"] = summarize_selection(selection)
-            st.session_state["quantum_runs"] += 1
-            sort_alerts()
-    pending: list[dict[str, object]] = st.session_state["quantum_pending"]
-    started = st.session_state["quantum_window_started"]
-    if not pending or started is None:
-        return
-    if len(pending) < QUANTUM_MIN_BATCH and monotonic() - started < QUANTUM_WINDOW_SECONDS:
-        return
-    batch, rest = pending[:QUANTUM_MAX_BATCH], pending[QUANTUM_MAX_BATCH:]
-    st.session_state["quantum_pending"] = rest
-    st.session_state["quantum_window_started"] = monotonic() if rest else None
-    ids = tuple(str(candidate["transaction_id"]) for candidate in batch)
-    for transaction_id in ids:
-        status[transaction_id] = "running"
-    st.session_state["quantum_batch_ids"] = ids
-    st.session_state["quantum_future"] = quantum_executor().submit(
-        select_priority,
-        batch,
-        quantum_solver(),
-        name=f"window_{st.session_state['quantum_runs']:05d}",
-    )
+            state["quantum_runs"] += 1
+        if summary.get("certified") or (REQUIRE_MEASURED_OPTIMUM and summary["backend"] == "error"):
+            state["quantum_history"] = (state["quantum_history"] + [summary])[-QUANTUM_HISTORY_LIMIT:]
+        state["quantum_last"] = summary
+    solver = quantum_solver()
+    store = ledger()
+    window = store.claim_window(QUANTUM_MIN_BATCH, QUANTUM_MAX_BATCH, QUANTUM_WINDOW_SECONDS, flush=flush)
+    if window:
+        lease, batch = window
+        state["quantum_future"] = quantum_executor().submit(solve_window, store, lease, batch, solver)
 
 
-def prune_quantum_status() -> None:
-    keep = {str(row["Mã giao dịch"]) for row in st.session_state["stream_rows"]}
-    keep |= {str(item["Mã giao dịch"]) for item in st.session_state["fraud_alerts"]}
-    keep |= {str(item["transaction_id"]) for item in st.session_state["quantum_pending"]}
-    keep |= set(st.session_state["quantum_batch_ids"])
-    status = st.session_state["quantum_status"]
-    for transaction_id in [key for key in status if key not in keep]:
-        del status[transaction_id]
-
-
-def process_tick() -> None:
-    data = realtime_source()
-    cursor = int(st.session_state["stream_cursor"])
-    if cursor >= len(data):
-        st.session_state["stream_cycles"] += 1
-        cursor = int(st.session_state["stream_start"])
-        st.session_state["stream_cursor"] = cursor
-        service().pipeline.scorer.history_transactions_ = (
-            service().pipeline.scorer._feature_history(
-                data.iloc[max(0, cursor - REALTIME_HISTORY_LIMIT) : cursor]
-            )
-        )
-    stop = min(len(data), cursor + random.randint(6, 24))
-    batch = data.iloc[cursor:stop].reset_index(drop=True).copy()
-    sequence = int(st.session_state["stream_sequence"])
-    cycle = int(st.session_state["stream_cycles"])
-    batch["transaction_id"] = [
-        f"TX-{cycle:03d}-{sequence + offset:010d}" for offset in range(len(batch))
-    ]
-    batch["timestamp"] = pd.Timestamp.now(tz="UTC") + pd.to_timedelta(
-        range(len(batch)), unit="ms"
-    )
-    st.session_state["stream_sequence"] += len(batch)
-    started = perf_counter()
-    scored = pd.DataFrame(service().score_transactions(batch))
-    scorer = service().pipeline.scorer
-    if scorer.history_transactions_ is not None:
-        scorer.history_transactions_ = (
-            scorer.history_transactions_.iloc[-REALTIME_HISTORY_LIMIT:].reset_index(drop=True)
-        )
-    elapsed = (perf_counter() - started) * 1000 / max(1, len(scored))
-    hold_threshold = float(scorer.validation_stats_.get("alert_hold_threshold", .6))
-    verify_threshold = float(scorer.candidate_threshold_)
-    rows = list(st.session_state["stream_rows"])
-    graph_rows = list(st.session_state.get("graph_rows", []))
-    alerts = list(st.session_state["fraud_alerts"])
-    pending = st.session_state["quantum_pending"]
-    status = st.session_state["quantum_status"]
-    for _, row in scored.iterrows():
-        is_candidate = bool(row["is_candidate"])
-        is_fraud = int(row.get("is_fraud", 0))
-        risk = float(row["risk_score"])
-        st.session_state["stream_processed"] += 1
-        st.session_state["stream_candidates"] += int(is_candidate)
-        st.session_state["stream_fraud_seen"] += is_fraud
-        st.session_state["stream_fraud_detected"] += int(is_fraud and is_candidate)
-        record = {
-            "Thời gian": row["timestamp"],
-            "Mã giao dịch": row["transaction_id"],
-            "Người gửi": str(row["sender_id"]),
-            "Người nhận": str(row["receiver_id"]),
-            "Loại": row["type"],
-            "Số tiền": float(row["amount"]),
-            "Risk": risk,
-            "Supervised": float(row.get("supervised_score", 0)),
-            "Anomaly": float(row.get("anomaly_score", 0)),
-            "Graph": float(row.get("graph_score", 0)),
-            "Rule": float(row.get("rule_score", 0)),
-            "Ứng viên": is_candidate,
-            "Nhãn fraud": bool(is_fraud),
-            "Lý do": row.get("reason_codes", ""),
-        }
-        rows.append(record)
-        graph_rows.append(record)
-        if is_candidate:
-            treatment = recommended_treatment(
-                {"risk_score": risk, "reason_codes": record["Lý do"]},
-                hold_threshold=hold_threshold,
-                verify_threshold=verify_threshold,
-            )
-            priority = {"hold_and_escalate": 3, "step_up_verification": 2}.get(
-                treatment["recommended_action"], 1
-            )
-            alerts.append({**record, **treatment, "action_priority": priority})
-            transaction_id = str(row["transaction_id"])
-            pending.append(
-                {
-                    "transaction_id": transaction_id,
-                    "risk_score": risk,
-                    "sender_id": str(row["sender_id"]),
-                    "receiver_id": str(row["receiver_id"]),
-                }
-            )
-            status[transaction_id] = "pending"
-            if st.session_state["quantum_window_started"] is None:
-                st.session_state["quantum_window_started"] = monotonic()
-    st.session_state["fraud_alerts"] = alerts
-    sort_alerts()
-    st.session_state["stream_rows"] = rows[-200:]
-    st.session_state["graph_rows"] = graph_rows[-GRAPH_HISTORY_LIMIT:]
-    st.session_state["stream_latency"] = (st.session_state["stream_latency"] + [elapsed])[-100:]
-    st.session_state["stream_cursor"] = stop
-    advance_quantum()
-    prune_quantum_status()
+def process_tick():
+    finished = False
+    if SOURCE_MODE == "replay":
+        data, boundary = realtime_source(STREAM_PATH)
+        offset = ledger().stats()["processed"]
+        start = boundary + offset
+        if start < len(data):
+            started = perf_counter()
+            processor = replay_processor(MODEL_PATH, CASE_DB, STREAM_NAME)
+            inserted = processor.ingest(data.iloc[start:start + 32], expected_offset=offset)
+            if inserted:
+                elapsed = (perf_counter() - started) * 1000 / inserted
+                st.session_state["stream_latency"] = (st.session_state["stream_latency"] + [elapsed])[-100:]
+        finished = start + 32 >= len(data)
+    if PRIORITY_MODE == "qubo":
+        advance_quantum(flush=finished)
+    return finished
 
 
 def quantum_card() -> tuple[str, str, str, str]:
-    solver = quantum_solver()
     last = st.session_state.get("quantum_last")
     configured = os.environ.get("QFG_SOLVER", "sqa")
     if not last:
@@ -964,7 +923,24 @@ def quantum_card() -> tuple[str, str, str, str]:
     parts = [f"{st.session_state['quantum_runs']} batch"]
     if last.get("n"):
         parts.append(f"chọn {last['k']}/{last['n']}")
-    if last.get("qpu_access_ms"):
+    if REQUIRE_MEASURED_OPTIMUM:
+        if last.get("fallback_reason"):
+            return ("Bộ giải QUBO", "Lỗi bộ giải", last["fallback_reason"], "qfg-quantum")
+        if last.get("measured_hit") is not None:
+            outcome = "Đã đo được nghiệm tối ưu" if last["measured_hit"] else "Chưa đo được nghiệm tối ưu"
+            parts.append(f"{last['optimal_reads']}/{last['measured_reads']} lần đo đạt tối ưu")
+            if last.get("time_to_first_hit_s") is not None:
+                parts.append(f"máy khách nhận lô có nghiệm tối ưu sau {last['time_to_first_hit_s']:.2f} s")
+            estimate = sampling_time_estimate(last["measured_reads"])
+            if estimate:
+                parts.append(f"lấy mẫu ước tính {estimate['estimated_sampling_ms']:.1f} ms "
+                             f"(giả định {estimate['assumed_shot_period_us']:g} µs/phép đo)")
+            return (str(last.get("hardware") or label), outcome, " · ".join(parts), "qfg-quantum")
+        return ("Bộ giải QUBO", label, " · ".join(parts), "qfg-quantum")
+    solver = quantum_solver()
+    if last.get("server_time_s"):
+        parts.append(f"Quafu {float(last['server_time_s']):.1f} s/job")
+    elif last.get("qpu_access_ms"):
         parts.append(f"QPU {last['qpu_access_ms']:.1f} ms")
     else:
         parts.append(f"{last.get('runtime_ms', 0):.0f} ms")
@@ -975,6 +951,14 @@ def quantum_card() -> tuple[str, str, str, str]:
             f"QPU đã dùng {stats['qpu_seconds_used']:.2f}"
             + (f"/{budget:.0f} s" if budget is not None else " s")
         )
+    if last.get("measured_hit") is not None:
+        parts.append(f"{last['optimal_reads']}/{last['measured_reads']} lần đo đạt tối ưu")
+        if last.get("time_to_first_hit_s") is not None:
+            parts.append(f"nhận đáp án sau {last['time_to_first_hit_s']:.2f} s")
+    elif last.get("matches_optimum") is True:
+        parts.append("khớp tối ưu MILP ✓")
+    elif last.get("final_gap") is not None:
+        parts.append(f"lệch tối ưu {float(last['final_gap']):.1%}")
     if last.get("fallback_reason"):
         parts.append(f"lý do: {str(last['fallback_reason'])[:80]}")
     elif last.get("hardware"):
@@ -982,16 +966,113 @@ def quantum_card() -> tuple[str, str, str, str]:
     return ("Bộ giải QUBO", label, " · ".join(parts), "qfg-quantum")
 
 
+def _share(values: list[object]) -> str:
+    known = [bool(v) for v in values if v is not None]
+    return f"{sum(known) / len(known):.0%}" if known else "—"
+
+
+def verification_panel() -> None:
+    """Honest per-window check: solver vs certified optimum vs plain top-K sort."""
+
+    history = st.session_state.get("quantum_history", [])
+    if not history:
+        st.caption(
+            f"Dữ liệu: {DATASET_LABEL} · trọng số liên kết c = "
+            f"{PRIORITY_CONFIG.connectivity_strength:g} (chuẩn hóa: "
+            f"{PRIORITY_CONFIG.risk_normalization}) · chờ cửa sổ đầu tiên để kiểm chứng tối ưu"
+        )
+        return
+    if REQUIRE_MEASURED_OPTIMUM:
+        hits = sum(h.get("measured_hit") is True for h in history)
+        st.caption(f"**{hits}/{len(history)} cụm đã kết thúc có mẫu đo đạt nghiệm tối ưu QUBO.** "
+                   "CPU kiểm chứng giá trị tối ưu bằng MILP.")
+        with st.expander("Chi tiết 10 cụm gần nhất"):
+            rows = []
+            for h in reversed(history[-10:]):
+                estimate = sampling_time_estimate(h.get("measured_reads"))
+                rows.append({
+                    "Ứng viên": h.get("n"), "Hồ sơ chọn": h.get("k"),
+                    "Đo được nghiệm tối ưu": h.get("measured_hit") is True,
+                    "Mẫu tối ưu": h.get("optimal_reads"), "Tổng phép đo": h.get("measured_reads"),
+                    "Máy khách nhận lô đạt (s)": h.get("time_to_first_hit_s"),
+                    "Lấy mẫu ước tính (ms)": estimate.get("estimated_sampling_ms"),
+                    "Chu kỳ giả định (µs)": estimate.get("assumed_shot_period_us"),
+                })
+            st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+        return
+    linked = sum(1 for h in history if int(h.get("edges", 0)) > 0)
+    raw_gaps = [float(h["raw_gap"]) for h in history if h.get("raw_gap") is not None]
+    differs = [h.get("differs_from_topk") for h in history if "differs_from_topk" in h]
+    labelled = [h for h in history if "fraud_selected" in h]
+    fraud_qubo = sum(h["fraud_selected"] for h in labelled)
+    fraud_topk = sum(h["fraud_topk"] for h in labelled)
+    label_summary = (f"QUBO {fraud_qubo}, theo điểm {fraud_topk} trên {len(labelled)} cửa sổ có nhãn"
+                     if labelled else "chưa có cửa sổ đủ nhãn")
+    st.caption(
+        f"**Kiểm chứng tối ưu (MILP, CPU)** · Dữ liệu: {DATASET_LABEL} · c = "
+        f"{PRIORITY_CONFIG.connectivity_strength:g} ({PRIORITY_CONFIG.risk_normalization}) · "
+        f"{len(history)} cửa sổ, {linked} có liên kết · "
+        f"solver khớp tối ưu: {_share([h.get('matches_optimum') for h in history])} "
+        f"(trước hậu xử lý: {_share([h.get('raw_matches_optimum') for h in history])}, "
+        f"lệch TB {sum(raw_gaps) / len(raw_gaps) if raw_gaps else 0:.1%}) · "
+        f"QUBO khác sắp xếp theo điểm ở {sum(bool(d) for d in differs)}/{len(differs)} cửa sổ · "
+        f"fraud được ưu tiên: {label_summary}"
+    )
+    with st.expander("Chi tiết 10 cửa sổ gần nhất"):
+        table = pd.DataFrame(
+            [
+                {
+                    "Backend": BACKEND_LABELS.get(str(h.get("backend")), str(h.get("backend"))),
+                    "N": h.get("n"),
+                    "K": h.get("k"),
+                    "Liên kết": h.get("edges"),
+                    "Lệch trước hậu xử lý": h.get("raw_gap"),
+                    "Lệch sau hậu xử lý": h.get("final_gap"),
+                    "Khớp tối ưu": bool(h.get("matches_optimum")),
+                    "Lần đo đạt tối ưu": h.get("optimal_reads"),
+                    "Nhận đáp án tối ưu (s)": h.get("time_to_first_hit_s"),
+                    "Khác sắp xếp": bool(h.get("differs_from_topk")),
+                    "Fraud QUBO / sắp xếp": f"{h.get('fraud_selected', '—')} / {h.get('fraud_topk', '—')}",
+                    "MILP (ms)": h.get("certify_ms"),
+                }
+                for h in reversed(history[-10:])
+            ]
+        )
+        st.dataframe(
+            table,
+            hide_index=True,
+            width="stretch",
+            column_config={
+                "Lệch trước hậu xử lý": st.column_config.NumberColumn(format="percent"),
+                "Lệch sau hậu xử lý": st.column_config.NumberColumn(format="percent"),
+                "MILP (ms)": st.column_config.NumberColumn(format="%.1f"),
+            },
+        )
+
+
 def render_alerts() -> None:
-    completed_alert = st.session_state.pop("action_success", None)
-    if completed_alert:
-        st.toast(f"Đã thực hiện hành động cho {completed_alert}", icon="✅")
-    alerts = st.session_state.get("fraud_alerts", [])
+    if not st.session_state.get("stream_ready"):
+        return
+    notice = st.session_state.pop("action_notice", None)
+    if notice:
+        st.toast(notice, icon="✅")
+    show_all = st.toggle("Xem cả ứng viên dưới ngưỡng điều tra", key="show_all_candidates", on_change=skip_tick)
+    query = dict(all_candidates=show_all, use_qubo=PRIORITY_MODE == "qubo", limit=MAX_VISIBLE_ALERTS)
+    total, records = ledger().queue(**query)
+    pages = ceil(total / MAX_VISIBLE_ALERTS)
+    if pages > 1:
+        if st.session_state.get("queue_page", 1) > pages:
+            st.session_state["queue_page"] = pages
+        page = st.number_input("Trang hồ sơ", 1, pages, key="queue_page", on_change=skip_tick)
+        if page > 1:
+            _, records = ledger().queue(**query, offset=(page - 1) * MAX_VISIBLE_ALERTS)
+    alerts = [display_record(row) for row in records]
+    st.session_state["fraud_alerts"] = alerts
     if not alerts:
         return
     if st.session_state.get("alerts_panel_hidden"):
         with st.container(key="fraud_alert_reopen"):
-            st.button(f"🔔 {len(alerts)}", on_click=reopen_alerts)
+            st.button(f"🔔 {total}", on_click=reopen_alerts)
         return
     action_labels = {
         "hold_and_escalate": "Tạm giữ và chuyển điều tra",
@@ -1007,13 +1088,7 @@ def render_alerts() -> None:
     }
     with st.container(key="fraud_alert_stack"):
         heading, control = st.columns([6, 1])
-        heading.markdown(f"**Cảnh báo cần xử lý · {len(alerts)}**")
-        if overflow := int(st.session_state.get("alerts_overflow", 0)):
-            st.caption(
-                f"{overflow} cảnh báo ưu tiên thấp đã bị loại do hàng đợi vượt "
-                f"{MAX_PENDING_ALERTS} mục."
-            )
-        quantum_status = st.session_state.get("quantum_status", {})
+        heading.markdown(f"**Hồ sơ chờ xử lý · {total}**")
         control.button("−", key="hide_fraud_alerts", on_click=minimize_alerts)
         for alert in alerts[:MAX_VISIBLE_ALERTS]:
             alert_id = str(alert["Mã giao dịch"])
@@ -1029,7 +1104,7 @@ def render_alerts() -> None:
                     unsafe_allow_html=True,
                 )
                 st.write(f"{alert['Số tiền']:,.0f} · {alert['Loại']}")
-                state = quantum_status.get(alert_id)
+                state = alert["priority_status"] if PRIORITY_MODE == "qubo" else None
                 if state == "selected":
                     st.markdown(":violet-badge[⚛ Được QUBO chọn ưu tiên]")
                 elif state in ("pending", "running"):
@@ -1052,7 +1127,7 @@ def render_alerts() -> None:
                     on_change=skip_tick,
                 )
                 st.button(
-                    "Thực thi hành động",
+                    "Ghi quyết định",
                     key=f"execute_{alert_id}",
                     type="primary",
                     width="stretch",
@@ -1062,63 +1137,60 @@ def render_alerts() -> None:
 
 
 st.markdown(
-    """<div class="qfg-header"><div class="qfg-logo">QF</div>
+    f"""<div class="qfg-header"><div class="qfg-logo">QF</div>
     <div class="qfg-name">Q-FraudGuard</div>
-    <div class="qfg-live"><span class="qfg-dot"></span>Real-time processing</div></div>""",
+    <div class="qfg-note">· {escape(DATASET_LABEL if SOURCE_MODE == "replay" else STREAM_NAME)}</div>
+    <div class="qfg-live"><span class="qfg-dot"></span>{"Phát lại CSV" if SOURCE_MODE == "replay" else "Luồng giao dịch"}</div></div>""",
     unsafe_allow_html=True,
 )
 
-if "stream_cursor" not in st.session_state and not st.session_state.get("qfg_error"):
+if not st.session_state.get("stream_ready"):
     try:
         initialize_stream()
-    except Exception as exc:
-        st.session_state["qfg_error"] = str(exc)
-
-if st.session_state.get("qfg_error"):
-    st.error(f"Không thể xử lý luồng giao dịch: {st.session_state['qfg_error']}")
+    except (ValueError, OSError, sqlite3.Error) as exc:
+        st.error(str(exc))
+        st.stop()
 
 
 @st.fragment(run_every=1.0)
 def realtime_panel() -> None:
-    if "stream_cursor" not in st.session_state:
-        return
-    skip = st.session_state.pop("_skip_tick", False)
-    if not skip:
-        process_tick()
-    processed = int(st.session_state["stream_processed"])
-    candidates = int(st.session_state["stream_candidates"])
-    fraud_seen = int(st.session_state["stream_fraud_seen"])
-    fraud_detected = int(st.session_state["stream_fraud_detected"])
-    latency = st.session_state["stream_latency"]
-    values = (
-        ("Đã xử lý", f"{processed:,}".replace(",", "."), "Giao dịch real-time", ""),
-        ("Ứng viên", f"{candidates:,}".replace(",", "."), "Qua ngưỡng rủi ro", "qfg-warn"),
-        (
-            "Tỷ lệ bắt được fraud",
-            f"{fraud_detected / fraud_seen:.1%}" if fraud_seen else "0.0%",
-            f"{fraud_detected}/{fraud_seen} fraud được phát hiện",
-            "qfg-risk",
-        ),
-        (
-            "Latency",
-            f"{sum(latency) / len(latency):.1f} ms" if latency else "0.0 ms",
-            "Trung bình mỗi giao dịch",
-            "",
-        ),
-        quantum_card(),
-    )
-    for column, value in zip(st.columns(5), values):
+    if not st.session_state.pop("_skip_tick", False):
+        try:
+            st.session_state["source_finished"] = process_tick()
+        except (OSError, ValueError, RuntimeError, sqlite3.Error) as exc:
+            st.error(f"Luồng dừng tại giao dịch chưa ghi. {exc}")
+            return
+    stats = ledger().stats()
+    frauds, caught, hits = stats["frauds"], stats["detected"], stats["review_hits"]
+    recall = f"{caught / frauds:.1%}" if frauds else "—"
+    values = [
+        ("Đã xử lý", f"{stats['processed']:,}", STREAM_NAME, ""),
+        ("Ứng viên", f"{stats['candidates']:,}", "Qua ngưỡng sàng lọc", "qfg-warn"),
+        ("Đủ ngưỡng điều tra", f"{stats['reviews']:,}", "Hồ sơ ưu tiên kiểm tra thủ công", ""),
+        ("Recall sàng lọc", recall, f"{caught}/{frauds} giao dịch gian lận đã có nhãn", "qfg-risk"),
+    ]
+    if PRIORITY_MODE == "qubo":
+        values.append(quantum_card())
+    for column, value in zip(st.columns(len(values)), values):
         with column:
             metric_card(*value)
-    rows = st.session_state["stream_rows"]
+    if frauds:
+        st.caption(f"Tầng điều tra giữ {hits}/{frauds} giao dịch gian lận ({hits / frauds:.1%}).")
+    latency = st.session_state["stream_latency"]
+    if latency:
+        st.caption(f"Thời gian chấm và ghi dữ liệu trung bình {sum(latency) / len(latency):.1f} ms/giao dịch.")
+    if st.session_state.get("source_finished"):
+        st.caption("Đã phát hết giao dịch trong tập kiểm tra.")
+    if PRIORITY_MODE == "qubo":
+        verification_panel()
+    rows = [display_record(row) for row in ledger().recent()]
     if rows:
         frame = pd.DataFrame(rows).iloc[::-1].copy()
-        frame["Nhãn thật"] = frame["Nhãn fraud"].map({True: "FRAUD", False: "NORMAL"})
-        status = st.session_state["quantum_status"]
-        frame["Ưu tiên QUBO"] = [
-            QUANTUM_STATUS_LABELS.get(status.get(str(transaction_id), ""), "")
-            for transaction_id in frame["Mã giao dịch"]
-        ]
+        frame["Nhãn thật"] = frame["Nhãn fraud"].map({True: "FRAUD", False: "NORMAL"}).fillna("Chưa có nhãn")
+        if PRIORITY_MODE == "qubo":
+            frame["Ưu tiên"] = frame["priority_status"].map(QUANTUM_STATUS_LABELS).where(frame["Ứng viên"], "")
+        else:
+            frame["Ưu tiên"] = frame["manual_review"].map({True: "Điều tra", False: ""})
         view = frame[
             [
                 "Thời gian",
@@ -1127,7 +1199,7 @@ def realtime_panel() -> None:
                 "Số tiền",
                 "Risk",
                 "Ứng viên",
-                "Ưu tiên QUBO",
+                "Ưu tiên",
                 "Nhãn thật",
             ]
         ]
@@ -1142,9 +1214,7 @@ def realtime_panel() -> None:
                     "Risk score", min_value=0.0, max_value=1.0, format="%.3f", color=RED
                 ),
                 "Ứng viên": st.column_config.CheckboxColumn(),
-                "Ưu tiên QUBO": st.column_config.TextColumn(
-                    help="Kết quả bài toán chọn K hồ sơ ưu tiên (QUBO) theo từng cửa sổ"
-                ),
+                "Ưu tiên": st.column_config.TextColumn(),
             },
         )
 
