@@ -8,6 +8,8 @@ Mỗi cửa sổ có N ứng viên, mỗi ứng viên ứng với một qubit. H
 
 Backend `quafu-fast-qpu` khởi tạo mạch một lớp theo điểm rủi ro. Mạch giữ tương tác giữa các cặp qubit lân cận và xấp xỉ các tương tác còn lại quanh trạng thái khởi tạo. Mỗi lô trả về tần suất các chuỗi bit sau 1.024 lần đo. Máy khách chấm từng mẫu theo **hàm QUBO đầy đủ**. CPU duyệt mọi cách chọn đúng K và đối chiếu với chứng nhận MILP. Một cửa sổ đạt nếu chip đo được ít nhất một mẫu khả thi có năng lượng bằng nghiệm tối ưu trong sai số `10⁻⁹ × max(1, |E*|)`. Các phương án đồng hạng đều được tính. [Mạch Quafu](../src/qf_guard/quafu.py) · [Mã benchmark](../scripts/quafu_first_hit.py)
 
+Hệ số liên kết 0,01 nhân với trọng số chung tài khoản 0,5 tạo phần thưởng 0,005 cho mỗi cặp. Đây cũng là cấu hình mặc định của dashboard khi bật QUBO. Nếu gọi trực tiếp `PriorityConfig()`, hệ số là 0,25 và điểm rủi ro giữ thang gốc. Trên cùng 40 cửa sổ chọn trước, CPU tính lại thấy top-K đạt tối ưu ở **40/40** với cấu hình đã chạy trên chip, **31/40** khi chỉ tăng hệ số lên 0,25 và **2/40** khi dùng cả hai mặc định thư viện. Hai cấu hình sau mới được đánh giá trên CPU. [Mặc định thư viện](../src/qf_guard/prioritization.py) · [Mặc định dashboard](../dashboard/app.py) · [Tính lại trên cùng cửa sổ](../scripts/verify_quafu_evidence.py)
+
 ### 40 cửa sổ có liên kết, chọn trước khi giải
 
 Benchmark lấy các giao dịch có điểm từ `0.00016` trở lên trong tập kiểm tra, xếp theo thời gian rồi chia thành nhóm liên tiếp. Ở từng kích thước, script chọn trước 10 nhóm rời nhau có ít nhất một cặp chung tài khoản, với hạt giống ngẫu nhiên (seed) `20261120`. Cả 40 cửa sổ đều có mẫu tối ưu ngay ở lô đầu. Hai đối chứng CPU, xếp theo điểm và xếp theo điểm rồi đổi chỗ, cũng đạt tối ưu trên cả 40. [Cách tạo cửa sổ](../scripts/qpu_check.py) · [Bản ghi gốc](../artifacts/deploy/quafu_verified_hits_8_12_15_18_20261118T212255Z.json)
@@ -22,6 +24,20 @@ Benchmark lấy các giao dịch có điểm từ `0.00016` trở lên trong t�
 Các cột thời gian đều là trung vị của 10 cửa sổ ở từng kích thước, bắt đầu khi ứng viên đã có điểm. Cột QPU dùng `time_to_verified_hit_s`, gồm chuẩn bị, gửi việc, chờ dịch vụ, nhận trọn lô kết quả và kiểm chứng trên CPU. Hai cột CPU dùng `cpu.exact.seconds` và `cpu.top_k_swap.seconds`, mỗi giá trị trên một cửa sổ là trung vị của bảy lượt. Ở N = 18, phương pháp duyệt hết xét đủ 3.060 cách chọn 4 hồ sơ.
 
 Gộp 40 cửa sổ chọn trước, thời gian máy khách xác minh nghiệm QPU có trung vị **3,00 s** và phân vị 95 (P95) **6,42 s**. P95 ở đây là quan sát thứ 38 khi xếp 40 thời gian tăng dần. [Số đo từng cửa sổ](../artifacts/deploy/quafu_verified_hits_8_12_15_18_20261118T212255Z.json)
+
+### Thời gian gửi tác vụ lên máy chủ ở 18 qubit
+
+Mười cửa sổ 18 qubit chọn trước đều đạt ngay ở lô đầu, nên có thể đối chiếu các đồng hồ sau trên đúng mười tác vụ. Các dòng thời gian QPU bao hàm nhau.
+
+| Đồng hồ | Trung vị | Phạm vi |
+|---|---:|---|
+| `time_to_verified_hit_s` | 2,829 s | Từ lúc bắt đầu xử lý cửa sổ đến lúc máy khách kiểm chứng được nghiệm |
+| `submit_to_counts_s` | 2,780 s | Từ lúc gọi gửi qua SDK, gồm gửi, chờ dịch vụ, kiểm tra trạng thái và nhận tần suất mẫu |
+| `server_time_s` | 0,967 s | Khoảng từ lúc tạo tới lúc kết thúc tác vụ, theo dấu thời gian do Quafu trả về |
+| `cpu.exact.seconds` | 7,734 ms | Lập bài toán và duyệt đủ các cách chọn trên CPU |
+| `cpu.top_k_swap.seconds` | 0,478 ms | Lập bài toán, xếp theo điểm và cải thiện bằng đổi chỗ trên CPU |
+
+Phần lớn thời gian người dùng chờ nằm trong bước gửi và chờ kết quả từ xa. Dấu thời gian máy chủ bao phủ nhiều hoạt động của dịch vụ. Bản ghi hiện tại chưa tách được số mili giây dành riêng cho tải mạch lên, xếp hàng hoặc thực thi vật lý trên chip. So với CPU duyệt hết, tỷ số trung vị giữa hai thời gian để có nghiệm đã kiểm chứng là khoảng **366 lần**. [Cách đặt đồng hồ trong bộ giải](../src/qf_guard/quafu.py) · [Mười bản ghi 18 qubit trong tập chọn trước](../artifacts/deploy/quafu_verified_hits_8_12_15_18_20261118T212255Z.json)
 
 ### 4 cửa sổ mà xếp hạng theo điểm bỏ lỡ nghiệm tối ưu
 
@@ -38,7 +54,7 @@ Chip và CPU có bước đổi chỗ đều đạt 4/4. Nếu chỉ tính lô �
 
 ### Hai lần chạy phần cứng khác
 
-- **Dashboard 18 qubit.** Hệ thống đọc 64 giao dịch, gom 18 cảnh báo và chọn 4 hồ sơ. Phương án chip đo được giữ hai hồ sơ trong nhóm bốn điểm cao nhất và chọn thêm hai hồ sơ khác. CPU duyệt 3.060 cách chọn và xác nhận cùng giá trị QUBO `−1,067874098782923`. Máy khách nhận lô có nghiệm sau 29,07 s. Trong 8.192 lần đo có một mẫu tối ưu, thuộc tác vụ `2611190600591042404`. [Bản ghi dashboard](../artifacts/deploy/quafu_dashboard_18_20261118T220101Z.json)
+- **Dashboard 18 qubit.** Hệ thống đọc 64 giao dịch, gom 18 cảnh báo và chọn 4 hồ sơ. Phương án chip đo được giữ hai hồ sơ trong nhóm bốn điểm cao nhất và chọn thêm hai hồ sơ khác. Cả hai lựa chọn đều có 0/4 hồ sơ mang nhãn rửa tiền. CPU duyệt 3.060 cách chọn và xác nhận cùng giá trị QUBO `−1,067874098782923`. Máy khách nhận lô có nghiệm sau 29,07 s. Trong 8.192 lần đo có một mẫu tối ưu, thuộc tác vụ `2611190600591042404`. [Bản ghi dashboard](../artifacts/deploy/quafu_dashboard_18_20261118T220101Z.json)
 - **Ủ lượng tử số hóa.** Một mạch 8 qubit, 3 bước Trotter, dùng toàn bộ hệ số QUBO trên cùng chip. Trong 2.048 lần đo, 225 mẫu chọn đúng 2 hồ sơ và 15 mẫu đạt tối ưu MILP. Mã tác vụ `2611190440279930041`. Hai lần chạy ở mục này được báo cáo riêng ngoài benchmark 44 cửa sổ. [Bản ghi mạch ủ số](../artifacts/deploy/qpu_check_quafu-anneal-qpu_20261118T204034Z.json)
 
 ## Kiểm chứng ngoại tuyến
@@ -47,7 +63,14 @@ Chip và CPU có bước đổi chỗ đều đạt 4/4. Nếu chỉ tính lô �
 python scripts/verify_quafu_evidence.py
 ```
 
-Lệnh đọc hai báo cáo gốc và 559 ứng viên xuất hiện trong benchmark, khôi phục giá trị từng cách chọn đúng K, đối chiếu các phương án CPU và đếm lại các mẫu tối ưu trong từng tác vụ. Kết quả lần lượt là 3.776/40.960 và 51/11.264 phép đo đạt tối ưu. Lệnh dùng thư viện chuẩn Python và có thể chạy độc lập với mô hình huấn luyện, ZIP AMLworld và dịch vụ Quafu. [Dữ liệu đầu vào](../data/quafu_benchmark_candidates.csv) · [Mã kiểm chứng](../scripts/verify_quafu_evidence.py)
+Lệnh đọc hai báo cáo gốc và 559 ứng viên xuất hiện trong benchmark, khôi phục giá trị từng cách chọn đúng K, đối chiếu các phương án CPU và đếm lại các mẫu tối ưu. Kết quả lần lượt là 3.776/40.960 và 51/11.264 phép đo đạt tối ưu. Sau khi tái lập lựa chọn, lệnh dùng nhãn AMLworld để đếm hồ sơ trúng. Chương trình cũng tính lại đối chứng top-K trên CPU khi thay đổi cấu hình liên kết. Lệnh dùng thư viện chuẩn Python và có thể chạy độc lập với mô hình huấn luyện, ZIP AMLworld và dịch vụ Quafu. [Dữ liệu đầu vào](../data/quafu_benchmark_candidates.csv) · [Mã kiểm chứng](../scripts/verify_quafu_evidence.py)
+
+| Tập đối chiếu theo nhãn | QPU, số trúng / lượt hồ sơ được chọn | CPU top-K, cùng ngân sách |
+|---|---:|---:|
+| 40 cửa sổ chọn trước | 3/130 | 3/130 |
+| 4 cửa sổ chọn riêng vì top-K bỏ lỡ tối ưu QUBO | 0/13 | 0/13 |
+
+Ở tập 40, hai cách chọn cùng ID trong từng cửa sổ. Ở tập 4, hai cách chọn khác ID nhưng cả bốn cửa sổ đều không có ứng viên dương tính. Mẫu số đếm lượt chọn theo cửa sổ, mỗi cửa sổ đóng góp K hồ sơ. Các số này chưa cho thấy việc tối ưu QUBO tìm được thêm giao dịch rửa tiền. [Nguồn nhãn và tập kiểm tra](../data/DATASETS.md)
 
 <details>
 <summary>Đối chiếu chuỗi bit với 4 hồ sơ của phiên dashboard</summary>
@@ -105,7 +128,9 @@ Lệnh mở dashboard kiểm tra backend trên hai cửa sổ rồi mở giao di
 | `exact` / `sqa` | Duyệt hết hoặc mô phỏng ủ lượng tử trên CPU |
 | `dwave-qpu` / `dwave-hybrid` / `dwave-mock` | Annealer qua Leap / dịch vụ hybrid CQM / kiểm tra tích hợp cục bộ |
 
-Để chạy tích hợp D-Wave, cài `python -m pip install -r requirements-quantum.txt`. Lệnh `python scripts/qpu_check.py --solver dwave-mock --windows 1` chạy mô phỏng. Với token `DWAVE_API_TOKEN`, dùng `python scripts/quantum_check.py --no-run` để liệt kê các solver khả dụng trước khi gửi một cửa sổ. Kết quả phần cứng nêu ở trên đều thuộc về Quafu Haituo.
+Để chạy tích hợp D-Wave, cài `python -m pip install -r requirements-quantum.txt`. Lệnh `python scripts/qpu_check.py --solver dwave-mock --windows 1` chạy mô phỏng. Với token `DWAVE_API_TOKEN`, dùng `python scripts/quantum_check.py --no-run` để liệt kê các solver khả dụng trước khi gửi một cửa sổ. Các phép chạy phần cứng nêu ở trên đều dùng Quafu Haituo.
+
+Trên sơ đồ Zephyr Z12 lý tưởng của D-Wave, các ánh xạ đã kiểm tra dùng 160, 560 và 1.920 qubit vật lý cho cửa sổ 40, 80 và 160 cảnh báo. Kịch bản QPU tương lai giả định tổng thời gian **5 ms từ lúc gửi đến khi nhận danh sách** có chất lượng ngang heuristic CPU. Riêng thời gian nạp bài điển hình trên `Advantage2_system2` hiện khoảng 24,5 ms. [So sánh theo kích thước cửa sổ](UOC_TINH_THOI_GIAN_DWAVE.md) · [Thông số Advantage2_system2](https://docs.dwavequantum.com/en/latest/quantum_research/solver_properties_specific.html#advantage2-system2)
 
 ## Mở rộng cửa sổ và giảm thời gian
 
@@ -116,6 +141,10 @@ Với ánh xạ một qubit cho mỗi ứng viên, phần cứng có nhiều qub
 | 18 | 4 | 3.060 | Đã đo trên Haituo |
 | 24 | 6 | 134.596 | Đề xuất chạy trên chip lớn hơn |
 | 32 | 8 | 10.518.300 | Đề xuất chạy trên chip lớn hơn |
+
+Khi K xấp xỉ N/4 như trong bảng, số tổ hợp `C(N,K)` tăng theo cấp số nhân theo N. Nếu giữ nguyên K, số tổ hợp chỉ tăng như một đa thức bậc K. Phép đếm này mô tả khối lượng **duyệt hết**. Đối chứng xếp theo điểm rồi đổi chỗ đã tìm được nghiệm tối ưu trên cả 44 cửa sổ mà không cần duyệt hết.
+
+Trong mạch `local` đã chạy, CPU tạo trạng thái ban đầu quanh top-K, với xác suất 0,9 ở từng bit ưu tiên. Một số lượt thử lại đổi một ứng viên ở ranh giới top-K. Mọi cổng hai qubit trong một mạch đều nằm trong các cặp (0,1), (2,3), … nên trạng thái lý tưởng là tích các trạng thái hai qubit và một qubit đơn nếu N lẻ. Khi đã có góc cổng, CPU tính được phân phối từng cặp với O(N) phép tính và có thể sinh R chuỗi mẫu với O(RN) phép tính. Chi phí này chỉ mô tả bước mô phỏng mạch. Lập hệ số QUBO, chấm mẫu và tìm nghiệm tối ưu là các bước riêng. Nhiễu phần cứng có thể làm thay đổi tần suất đo. Mạch hiện tại chưa có cơ sở lý thuyết cho lợi thế tốc độ cấp số nhân khi tăng qubit. [Mã tạo mạch](../src/qf_guard/quafu.py) · [Phân tích khả năng mô phỏng của Jozsa và Linden](https://arxiv.org/abs/quant-ph/0201143)
 
 Backend nhanh mặc định giới hạn ở 18 qubit. Để thử 24 hoặc 32, cần có đủ qubit kết nối, hiệu chuẩn phù hợp với mạch và đặt `QFG_QUAFU_FAST_MAX_QUBITS` theo kích thước được hỗ trợ. Bố trí qubit có thể ảnh hưởng đến số cổng hai qubit sau biên dịch. Còn thời gian người dùng chờ phụ thuộc cả vào số lô cần gửi, hàng đợi và thời gian trả kết quả. [Cấu hình bộ giải](../src/qf_guard/solvers.py) · [Ánh xạ mạch lên phần cứng](https://quantum.cloud.ibm.com/docs/en/qiskit/transpile)
 

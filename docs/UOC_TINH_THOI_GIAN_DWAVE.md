@@ -1,76 +1,62 @@
-# Ước tính thời gian QPU để đạt nghiệm đủ tốt theo tham chiếu D-Wave
+# CPU và QPU khi chọn hồ sơ từ 40, 80 và 160 cảnh báo
 
-**Ví dụ với 32 hồ sơ cần chọn 8.** Nếu mỗi lần đọc có xác suất **1%** trả về phương án đạt ít nhất **99% giá trị tối ưu**, cần **299 lần đọc** để xác suất thu được ít nhất một nghiệm đạt mục tiêu lên **95%**. Theo mô hình thời gian D-Wave bên dưới, phần ủ thuần mất **5,98 ms**, cả chu kỳ lấy mẫu mất **61,21 ms**, và thời gian truy cập QPU gồm cả lập trình mất **76,29 ms** cho một tác vụ. Thời gian từ máy khách gửi yêu cầu đến nhận kết quả còn phụ thuộc dịch vụ và mạng. [Mô hình thời gian của D-Wave](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html)
+Bộ giải lượng tử có thể vượt bộ giải cổ điển. Với bài toán hiện tại của Q-FraudGuard, **CPU vẫn là lựa chọn thực tế**. Chọn 10 trong 40 cảnh báo đã khả thi về số qubit. Thách thức là trả về một danh sách tốt ngang cách chọn gần đúng trên CPU (heuristic). CPU đang mất khoảng **1,6–3,2 mili giây** cho bước này ở hai cỡ cửa sổ 40 và 80 cảnh báo.
 
-Bảng này là **ước tính có điều kiện cho máy ủ lượng tử D-Wave**. Các lần chạy phần cứng của Q-FraudGuard được ghi trên chip cổng lượng tử Quafu Haituo. Xác suất thành công trên D-Wave cho các cửa sổ của dự án vẫn cần đo. [Bản ghi và cách đo trên Haituo](TRIEN_KHAI_QPU.md)
+Với cách mã hóa hiện tại, mỗi cảnh báo cần một biến nhị phân. Điều kiện “chọn đúng 10” tạo liên kết giữa cả **780 cặp** trong 40 biến (`40 × 39 / 2`). Trên máy ủ lượng tử D-Wave, một biến có thể cần một chuỗi qubit vật lý để nối đủ các cặp. Các ánh xạ trong bảng đã được kiểm tra trên sơ đồ **Zephyr Z12 lý tưởng**. Số qubit thực dùng có thể thay đổi theo từng chip. [Cách D-Wave ánh xạ biến logic lên qubit vật lý](https://docs.dwavequantum.com/en/latest/quantum_research/embedding_intro.html)
 
-## Thế nào là một nghiệm đủ tốt?
+| Bài toán | Qubit vật lý trong ánh xạ đã kiểm tra | Heuristic CPU, trung vị | MILP trên CPU, trung vị, có chứng nhận tối ưu |
+|---|---:|---:|---:|
+| Chọn 10 trong 40 | 160 | 1,64 ms | 6,59 ms |
+| Chọn 20 trong 80 | 560 | 3,20 ms | 9,48 ms |
+| Chọn 40 trong 160 | 1.920 | 9,53 ms | 20,56 ms |
 
-Với một cửa sổ N ứng viên, chọn đúng K theo quy tắc của prototype. Gọi `F(x)` là tổng điểm rủi ro chuẩn hóa của các hồ sơ đã chọn cộng 0,005 cho mỗi cặp được chọn chung tài khoản. Gọi `F*` là giá trị lớn nhất với đúng K hồ sơ. Tài liệu này chọn mục tiêu **đúng K và `F(x) ≥ 0,99 × F*`**. Một lần đọc được tính sau khi giải mã chuỗi qubit, trước bước sửa nghiệm hay đổi chỗ trên CPU. Trong phép đo đề xuất, chuỗi qubit bị đứt được tính là một lần hụt. Tiêu chí 99% nói về hàm QUBO. Khả năng giữ giao dịch rửa tiền cần đo riêng bằng nhãn AML. [Hàm mục tiêu](../src/qf_guard/prioritization.py)
+Phép đo CPU do tác giả cung cấp dùng cùng **1.920 ứng viên AMLworld tổng hợp**, chia thành 48, 24 và 12 cửa sổ tương ứng, với một luồng tính toán BLAS. Độ hụt trung bình của heuristic so với điểm QUBO tối ưu là **1,0%** ở 40 cảnh báo, **2,2%** ở 80 và **3,3%** ở 160.
 
-Gọi `p` là xác suất một lần đọc đạt mục tiêu **trên chính cửa sổ, cách nhúng và cấu hình chip đó**. Với các lần đọc độc lập, cùng xác suất `p`, cơ hội có ít nhất một nghiệm đạt sau `R` lần là `1 − (1 − p)^R`. Số lần đọc tối thiểu cho độ tin cậy 95% là `R = ceil(ln(0,05) / ln(1 − p))` với `0 < p < 1`. Nếu `p = 1`, chỉ cần một lần. Nếu `p = 0`, tăng số lần đọc vẫn không đạt mục tiêu.
+## Thời gian lấy mẫu trên QPU đặt tại công ty
 
-| Xác suất đạt mục tiêu mỗi lần đọc, giả định | Lần đọc cần cho 95% | Tổng thời gian ủ ở 20 µs/lần |
-|---:|---:|---:|
-| 10% | 29 | 0,58 ms |
-| 1% | 299 | 5,98 ms |
-| 0,1% | 2.995 | 59,90 ms |
+Giả sử công ty dùng phần cứng tương đương `Advantage2_system2`. Đồng hồ bắt đầu sau khi bài QUBO đã được nạp và chỉ tính thời gian lấy mẫu trên chip (`qpu_sampling_time`). Cách tính này bỏ thời gian truyền mạng, xếp hàng, nạp hệ số và xử lý kết quả trên CPU. Nạp hệ số vẫn là một thao tác vật lý khi dùng máy tại chỗ. [Chu kỳ lập trình và lấy mẫu của D-Wave](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#programming-cycle)
 
-## Ước tính khi tăng số qubit
+Mỗi lượt đọc trả về một phương án ứng viên cho cả cửa sổ. Với lịch ủ **20 µs**, thời gian đọc **17–95 µs** và thời gian ổn định chip **20,6 µs**, tổng thời gian cho **R lượt ≈ R × (57,6–135,6) µs**. Dải đọc của hãng bao quát từ một qubit đến toàn chip. Trên cùng một QUBO, **1.000 lượt** mất khoảng **57,6–135,6 ms**, **10.000 lượt** mất **0,576–1,356 s** và **một triệu lượt** mất **57,6–135,6 s**. Nếu chia thành nhiều lô, các con số này là tổng thời gian lấy mẫu của các lô. [Thông số Advantage2_system2](https://docs.dwavequantum.com/en/latest/quantum_research/solver_properties_specific.html#advantage2-system2) · [Cách D-Wave tính thời gian lấy mẫu](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#anneal-read-cycle)
 
-QUBO chọn đúng K có số hạng phạt `P(Σx − K)²`, tạo tương tác giữa mọi cặp biến. Backend D-Wave của dự án dùng `DWaveCliqueSampler`. Một biến logic có thể cần một chuỗi nhiều qubit vật lý. Cột qubit vật lý dưới đây là số qubit dùng trong **một phép nhúng tính ngoại tuyến trên đồ thị Pegasus P16 lý tưởng**, với `minorminer` và seed 42. Trên chip thật, các qubit và khớp nối đang hoạt động quyết định cách nhúng và kích thước tối đa. [Backend của dự án](../src/qf_guard/solvers.py) · [Cách D-Wave nhúng biến logic lên phần cứng](https://docs.dwavequantum.com/en/latest/quantum_research/embedding_intro.html)
+Khi đầu ra cần **một danh sách mỗi cửa sổ**, CPU chạy heuristic một lần. Bảng cho biết số lượt đọc nguyên lớn nhất mà tổng thời gian lấy mẫu QPU vẫn thấp hơn trung vị CPU, ở hai đầu của dải tham chiếu. Nếu đầu ra cần một triệu phương án cho cùng một cửa sổ, dự án chưa đo tốc độ sinh mẫu tương ứng trên CPU.
 
-Tốc độ tham chiếu lấy từ **bộ tham số lịch sử của `Advantage_system4.1`, tháng 8/2022**, do D-Wave phân phối trong Ocean. Ở chế độ ủ thuận mặc định, mô hình dùng 14.072,88 µs để lập trình cộng 1.000 µs ổn định sau lập trình, 20 µs để ủ mỗi lần và 20,54 µs chờ giữa các lần. Ocean ước tính thời gian đọc từ số qubit vật lý bằng nội suy log–log. Các giá trị này mô tả một cấu hình tham chiếu cụ thể. [Bộ tham số D-Wave trong Ocean 0.14.6](https://github.com/dwavesystems/dwave-cloud-client/blob/0.14.6/dwave/cloud/testing/mocks.py#L282) · [Hàm ước tính của Ocean](https://docs.dwavequantum.com/en/latest/ocean/api_ref_cloud/generated/dwave.cloud.solver.StructuredSolver.estimate_qpu_access_time.html)
+| Bài toán | CPU cho một danh sách | Ở 135,6 µs/lượt | Ở 57,6 µs/lượt |
+|---|---:|---:|---:|
+| Chọn 10 trong 40 | 1,64 ms | 12 lượt | 28 lượt |
+| Chọn 20 trong 80 | 3,20 ms | 23 lượt | 55 lượt |
+| Chọn 40 trong 160 | 9,53 ms | 70 lượt | 165 lượt |
 
-| Hồ sơ / qubit logic | K | Qubit vật lý dùng | Chu kỳ mỗi lần đọc (µs) | Truy cập QPU nếu p = 10% (ms) | Nếu p = 1% (ms) | Nếu p = 0,1% (ms) |
-|---:|---:|---:|---:|---:|---:|---:|
-| 8 | 2 | 16 | 137,76 | 19,07 | 56,26 | 427,66 |
-| 18 | 4 | 50 | 172,04 | 20,06 | 66,51 | 530,33 |
-| 24 | 6 | 90 | 189,76 | 20,58 | 71,81 | 583,41 |
-| 32 | 8 | 142 | 204,73 | 21,01 | 76,29 | 628,24 |
-| 48 | 12 | 274 | 228,99 | 21,71 | 83,54 | 700,89 |
-| 64 | 16 | 436 | 248,26 | 22,27 | 89,30 | 758,61 |
-| 128 | 32 | 1.582 | 275,83 | 23,07 | 97,55 | 841,19 |
+Ở mức mặc định **100 lượt/cửa sổ** của dự án, để nhanh hơn CPU ở cỡ 160 cảnh báo, mỗi chu kỳ cần dưới **95,3 µs** (`9,53 ms / 100`), tức phần đọc qubit phải dưới **54,7 µs** sau khi trừ phần ủ và ổn định. Dự án chưa đo thời gian đọc của ánh xạ này trên chip thật hoặc số lượt cần để chọn đúng 40 hồ sơ với điểm QUBO ngang heuristic. [Cấu hình và trường thời gian của bộ giải D-Wave](../src/qf_guard/solvers.py)
 
-Mỗi ô thời gian giả định **một lần lập trình cho cả lô**. Chu kỳ lấy mẫu bằng thời gian ủ cộng thời gian đọc và chờ. Công thức của bảng là `T_truy_cập = 15,07288 ms + R × T_chu_kỳ` sau khi đổi đơn vị. Đây là đại lượng tương ứng với trường SAPI `qpu_access_time`. D-Wave ghi riêng `qpu_access_overhead_time`. Đồng hồ máy khách còn tính lập bài toán, tìm cách nhúng, truyền yêu cầu, xếp hàng, trả kết quả và hậu xử lý theo phạm vi đo. Nếu phải chia thành nhiều tác vụ, cần tính phí thời gian lập trình cho từng tác vụ. [Các trường thời gian SAPI](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#sapi-timing-fields)
+### Một triệu cảnh báo đã được chấm rủi ro
 
-Ở cùng giả định `p = 1%`, tăng từ 32 lên 128 biến làm thời gian truy cập ước tính tăng từ 76,29 lên 97,55 ms. Nếu ở 128 biến `p` giảm xuống 0,1%, con số thành 841,19 ms. **Xác suất đạt chất lượng yêu cầu là đại lượng còn thiếu để dự báo tốc độ thực tế.** Trên 10 cửa sổ 18 ứng viên đã đo, CPU duyệt hết đạt đúng tối ưu trong 7,73 ms ở trung vị. Để tìm kích thước mà QPU có lợi về thời gian, cần đo hai hệ thống trên cùng cửa sổ, cùng tiêu chí chất lượng và cùng phạm vi đồng hồ. [Đối chứng CPU đã đo](../artifacts/deploy/quafu_verified_hits_8_12_15_18_20261118T212255Z.json)
+Chia **1.000.000 cảnh báo** thành **6.250 cửa sổ độc lập**, mỗi cửa sổ chọn 40 trong 160 hồ sơ. Nếu xử lý tuần tự, thời gian chọn hồ sơ trên CPU ước tính **59,56 s** (`6.250 × 9,53 ms`). Đây là ngoại suy từ trung vị của 12 cửa sổ đã đo. Phía QPU dùng cùng số cửa sổ và cộng thời gian lấy mẫu.
 
-## Tính lại bảng ngoại tuyến
+| Lượt đọc mỗi cửa sổ | QPU cho một cửa sổ | QPU cho 6.250 cửa sổ | So với CPU ở mức 59,56 s |
+|---:|---:|---:|---|
+| 50 | 2,88–6,78 ms | 18,00–42,38 s | Lấy mẫu QPU nhanh hơn khoảng 1,4–3,3 lần |
+| 100 | 5,76–13,56 ms | 36,00–84,75 s | Phụ thuộc thời gian đọc thực tế |
+| 1.000 | 57,6–135,6 ms | 360–847,5 s | CPU nhanh hơn khoảng 6–14 lần |
 
-Cài `python -m pip install -r requirements-quantum.txt` từ thư mục gốc. Bảng dùng Ocean SDK 9.4.0, `dwave-cloud-client` 0.14.6 và `minorminer` 0.2.22. Đoạn Python sau chỉ dựng đồ thị và gọi mô hình thời gian cục bộ.
+Nếu 50 lượt cho một danh sách tốt ngang CPU, phần lấy mẫu QPU tiết kiệm khoảng **17–42 giây** trên một triệu cảnh báo trong kịch bản này. Tăng số cửa sổ cùng kích thước nhân thời gian của cả hai bên với cùng một hệ số. Nếu muốn xét chung cả triệu cảnh báo trong **một** bài QUBO, riêng mã hóa hiện tại đã cần một triệu biến logic. Chip tham chiếu có 4.506 qubit vật lý. [Số qubit của Advantage2_system2](https://docs.dwavequantum.com/en/latest/quantum_research/solver_properties_specific.html#advantage2-system2)
 
-```python
-from math import ceil, log1p
+## Thời gian từ lúc gửi đến lúc nhận kết quả
 
-from dwave.cloud.solver import StructuredSolver
-from dwave.cloud.testing.mocks import qpu_pegasus_solver_data, qpu_problem_timing_data
-from dwave.graphs import pegasus_graph
-from minorminer.busclique import find_clique_embedding
+Giả sử một QPU tương lai trả về danh sách có chất lượng ngang heuristic trong **5 ms**, tính cả gửi bài, chờ, lấy mẫu và nhận kết quả. Với 40 cảnh báo, CPU vẫn nhanh hơn khoảng **3,1 lần** nếu lấy thời gian CPU làm tròn là 1,6 ms. Với 160 cảnh báo, QPU sẽ nhanh hơn heuristic đã đo khoảng **1,9 lần** (`9,53 / 5`), tiết kiệm khoảng **4,5 ms mỗi cửa sổ** (`9,53 − 5 = 4,53 ms`).
 
-graph = pegasus_graph(16)
-profile = qpu_problem_timing_data("advantage")
-spec = qpu_pegasus_solver_data(16)
-spec["properties"]["problem_timing_data"] = profile
-solver = StructuredSolver(client=None, data=spec)
-program_us = profile["typical_programming_time"] + profile["default_programming_thermalization"]
+**5 ms là giả định để tính ngưỡng.** Trên `Advantage2_system2`, D-Wave công bố riêng thời gian điển hình để nạp một bài mới đã khoảng **24,5 ms**. [Thông số QPU Advantage2_system2 của D-Wave](https://docs.dwavequantum.com/en/latest/quantum_research/solver_properties_specific.html#advantage2-system2)
 
-for n in (8, 18, 24, 32, 48, 64, 128):
-    embedding = find_clique_embedding(n, graph, seed=42, use_cache=False)
-    if len(embedding) != n:
-        raise ValueError(f"Không nhúng được đủ {n} biến")
-    physical = len({q for chain in embedding.values() for q in chain})
-    cycle_us = solver.estimate_qpu_access_time(physical, num_reads=1, annealing_time=20) - program_us
-    access_ms = []
-    for p in (0.10, 0.01, 0.001):
-        reads = ceil(log1p(-0.95) / log1p(-p))
-        access_us = solver.estimate_qpu_access_time(physical, num_reads=reads, annealing_time=20)
-        access_ms.append(round(float(access_us) / 1000, 2))
-    print(n, max(1, round(n / 4)), physical, round(float(cycle_us), 2), access_ms)
-```
+Thêm qubit giúp xét chung nhiều cảnh báo hơn. Nếu ngân hàng vẫn xử lý từng nhóm 40, kể cả một QPU trả lời tức thì cũng chỉ tiết kiệm khoảng **1,6 ms** ở bước chọn hồ sơ, theo trung vị đã đo. Lý do đáng phát triển tiếp là khi điều tra viên cần xét chung những nhóm lớn hơn để lần theo dòng tiền và QPU có thể trả về danh sách tốt hơn trong thời hạn thực tế của ca trực.
 
-## Thay giả định bằng số đo
+### Một tác vụ trên Advantage2_system2 hiện tại
 
-Chọn cửa sổ trước khi chạy và chốt ngưỡng chất lượng. Dùng nghiệm chính xác của CPU ở kích thước còn giải được. Với cửa sổ lớn, có thể dùng một cận trên đã chứng nhận cho `F*` để đặt mục tiêu bảo thủ, hoặc công bố rõ nếu ngưỡng chỉ so với nghiệm tốt nhất đã biết. Gửi số lần đọc cố định trên nhiều lô và ghi cả các lô hụt. Đếm số lần đạt trên tổng số lần đọc, tính khoảng bất định theo từng cửa sổ và kiểm tra tương quan giữa các lần đọc. Khi tương quan đáng kể, dùng tỷ lệ **lô** thành công quan sát được để ước tính thời gian đến mục tiêu.
+Với một cửa sổ mới, QPU nạp hệ số QUBO một lần rồi lấy số mẫu yêu cầu. Bảng dùng lịch ủ 20 µs và cùng dải thời gian đọc như trên cho cả ba ánh xạ 160, 560 và 1.920 qubit vật lý. Muốn tính sát từng ánh xạ cần đường cong thời gian đọc của đúng chip (`problem_timing_data`). [Cách Ocean tính theo số qubit đã nhúng](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#estimating-access-time)
 
-Ghi đồng thời số qubit sau nhúng, tỷ lệ đứt chuỗi, số mẫu khả thi, các trường `qpu_programming_time`, `qpu_sampling_time`, `qpu_access_time` và thời gian máy khách. Đối chứng CPU gồm cả xếp theo điểm rồi đổi chỗ. Các số đo đó cho phép thay trực tiếp ba cột xác suất giả định bằng thời gian quan sát ở cùng mức chất lượng.
+| Một bài QUBO mới | Tổng thời gian lấy mẫu | Nạp 24,5 ms + lấy mẫu | Nếu cộng 1 ms ổn định sau nạp |
+|---|---:|---:|---:|
+| 1 mẫu | 0,058–0,136 ms | 24,56–24,64 ms | 25,56–25,64 ms |
+| 100 mẫu trong cùng tác vụ (mặc định `dwave-qpu`) | 5,76–13,56 ms | 30,26–38,06 ms | 31,26–39,06 ms |
+
+Phép tính dùng thời gian nạp điển hình cộng số mẫu nhân với thời gian một chu kỳ. Cột cuối minh họa mức chờ ổn định 1 ms thường gặp trong hướng dẫn của hãng. Khi có kết quả thật, `qpu_programming_time` đã bao gồm khoản chờ này. [Chu kỳ lập trình và lấy mẫu của D-Wave](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#programming-cycle) · [Mặc định số mẫu trong dự án](../src/qf_guard/solvers.py)
+
+Thời gian **từ lúc gửi đến lúc nhận danh sách** còn gồm khởi tạo cấp thấp, truyền mạng, xếp hàng và xử lý kết quả. Dự án chưa có số đo đầu-cuối trên D-Wave cho ba cỡ cửa sổ này. Ở nhóm 160 cảnh báo, trung vị **9,53 ms** của heuristic CPU vẫn thấp hơn riêng thời gian nạp bài điển hình trên D-Wave. Để đối chiếu với phần cứng đã chạy, trên **Quafu Haituo** ở 18 qubit, trung vị từ lúc gửi đến lúc nhận lô 1.024 mẫu là **2,78 giây**, và từ lúc bắt đầu xử lý đến khi xác minh nghiệm là **2,83 giây** trên 10 cửa sổ. [Đồng hồ dịch vụ D-Wave](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#qmi-timing) · [Bản ghi Haituo](../artifacts/deploy/quafu_verified_hits_8_12_15_18_20261118T212255Z.json)

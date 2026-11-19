@@ -11,6 +11,6 @@ Bảng dưới ghi giấy phép mà bên cung cấp công bố trên trang của
 
 ## Bản trích AMLworld dùng để kiểm chứng QPU
 
-Từ dữ liệu tổng hợp của IBM, Q-FraudGuard chọn các bản ghi xuất hiện trong 44 cửa sổ, gán mã giao dịch, ghép mã ngân hàng với mã tài khoản và bổ sung điểm rủi ro do mô hình chấm. Dòng đầu của CSV ghi nguồn, các thay đổi và giấy phép CDLA-Sharing-1.0. Khi phân phối lại bản trích, giữ thông tin này cùng liên kết tới điều khoản. [CSV ứng viên](../quafu_benchmark_candidates.csv) · [Điều khoản CDLA-Sharing-1.0](https://cdla.dev/sharing-1-0/)
+Từ dữ liệu tổng hợp của IBM, Q-FraudGuard chọn các bản ghi xuất hiện trong 44 cửa sổ, gán mã giao dịch, ghép mã ngân hàng với mã tài khoản và bổ sung điểm rủi ro do mô hình chấm. Cột `is_fraud` giữ nhãn rửa tiền gốc của AMLworld để đối chiếu sau khi chọn hồ sơ. Dòng đầu của CSV ghi nguồn, các thay đổi và giấy phép CDLA-Sharing-1.0. Khi phân phối lại bản trích, giữ thông tin này cùng liên kết tới điều khoản. [CSV ứng viên](../quafu_benchmark_candidates.csv) · [Điều khoản CDLA-Sharing-1.0](https://cdla.dev/sharing-1-0/)
 
 Vị trí các ZIP, mẫu PaySim và cách tạo đầu vào cho một lần chạy mới được ghi trong [danh mục dữ liệu](../DATASETS.md).

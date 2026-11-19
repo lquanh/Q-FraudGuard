@@ -1,0 +1,103 @@
+{
+  "rows": [
+    3046342,
+    1015447,
+    1015448
+  ],
+  "laundering": [
+    2297,
+    1082,
+    1143
+  ],
+  "target_recall": 0.95,
+  "label_delay_hours": 24,
+  "results": [
+    {
+      "name": "4-day model (own threshold, list updated)",
+      "pr_auc": 0.3525939366020715,
+      "roc_auc": 0.969813081524091,
+      "test_laundering": 1143,
+      "caught_at_threshold": 857,
+      "recall_at_threshold": 0.7497812773403325,
+      "flag_rate_at_threshold": 0.034570947995367564,
+      "precision_at_threshold": 0.02441247685514884,
+      "flag_rate_needed_for_90": 0.10547462794746752,
+      "flag_rate_needed_for_95": 0.14726603430210114,
+      "flag_rate_needed_for_97": 0.17937304519778463,
+      "recall_at_top4": 0.7646544181977253,
+      "attempts_in_test": 183,
+      "attempts_with_a_flagged_tx": 182,
+      "validation_recall": null
+    },
+    {
+      "name": "all data, base features",
+      "pr_auc": 0.3788927132739762,
+      "roc_auc": 0.9741985007701919,
+      "test_laundering": 1143,
+      "caught_at_threshold": 1085,
+      "recall_at_threshold": 0.9492563429571304,
+      "flag_rate_at_threshold": 0.15709026951650898,
+      "precision_at_threshold": 0.0068017828820752645,
+      "flag_rate_needed_for_90": 0.08596895163514036,
+      "flag_rate_needed_for_95": 0.15830155753913544,
+      "flag_rate_needed_for_97": 0.1862517824644886,
+      "recall_at_top4": 0.8363954505686789,
+      "attempts_in_test": 183,
+      "attempts_with_a_flagged_tx": 183,
+      "validation_recall": 0.9500924214417745,
+      "validation_flag_rate": 0.1564355402103704,
+      "validation_pr_auc": 0.42686365636844986,
+      "threshold": 0.00014005968262142786,
+      "fit_seconds": 711
+    },
+    {
+      "name": "all data, confirmed list, no payment format",
+      "pr_auc": 0.4341390490494509,
+      "roc_auc": 0.9767040370267972,
+      "test_laundering": 1143,
+      "caught_at_threshold": 1083,
+      "recall_at_threshold": 0.94750656167979,
+      "flag_rate_at_threshold": 0.11987615318558902,
+      "precision_at_threshold": 0.008896884858044164,
+      "flag_rate_needed_for_90": 0.07788385028086126,
+      "flag_rate_needed_for_95": 0.1254726977649274,
+      "flag_rate_needed_for_97": 0.15437127258116615,
+      "recall_at_top4": 0.8530183727034121,
+      "attempts_in_test": 183,
+      "attempts_with_a_flagged_tx": 183,
+      "validation_recall": 0.9500924214417745,
+      "validation_flag_rate": 0.119714766009452,
+      "validation_pr_auc": 0.49028256086471345,
+      "threshold": 0.0001878769200644986,
+      "fit_seconds": 859
+    }
+  ],
+  "saved_model": "D:\\Quantum\\artifacts\\models\\amlworld_full_scorer.joblib",
+  "saved_config": {
+    "supervised_model": "lightgbm",
+    "supervised_weight": 0.55,
+    "anomaly_weight": 0.15,
+    "graph_weight": 0.2,
+    "rule_weight": 0.1,
+    "optimize_weights_on_validation": true,
+    "weight_grid_step": 0.05,
+    "target_fraud_retention": 0.95,
+    "target_candidate_rate": 0.15,
+    "random_state": 42,
+    "feature_groups": [
+      "attributes",
+      "confirmed"
+    ],
+    "label_delay_minutes": 1440,
+    "lightgbm_params": {
+      "num_leaves": 63,
+      "min_child_samples": 100,
+      "n_estimators": 400,
+      "learning_rate": 0.05,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1.0
+    },
+    "target_recall": 0.95
+  },
+  "runtime_seconds": 1785
+}

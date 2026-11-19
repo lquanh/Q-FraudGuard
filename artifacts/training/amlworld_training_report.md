@@ -1,8 +1,8 @@
 # Đánh giá mô hình chấm điểm giao dịch trên CPU
 
-Thí nghiệm dùng `amlworld_hi_small_4d.csv`, một mẫu giao dịch tổng hợp IBM AMLworld. Mọi cấu hình chấm cùng một tập kiểm tra. Mô hình được chọn theo PR-AUC trên tập xác thực. Ở các cấu hình dùng danh sách tài khoản đã xác nhận, nhãn được sử dụng sau 24 giờ.
+Thí nghiệm dùng `amlworld_hi_small_4d.csv`, một mẫu giao dịch tổng hợp IBM AMLworld. Mô hình được chọn theo PR-AUC trên tập xác thực. Ở các cấu hình dùng danh sách tài khoản đã xác nhận, nhãn được sử dụng sau 24 giờ.
 
-**Kết quả của mô hình được chọn.** PR-AUC trên tập kiểm tra đạt **0,518**. Trong 4% giao dịch có điểm cao nhất, mô hình giữ được **85,5%** số giao dịch rửa tiền của tập kiểm tra.
+Trên 275.911 giao dịch kiểm tra của mẫu này, mô hình `amlworld_tuned_scorer.joblib` đạt PR-AUC **0,518**. Trong 4% giao dịch có điểm cao nhất, mô hình giữ được **85,5%** số giao dịch rửa tiền của tập kiểm tra.
 
 ## Dữ liệu theo thứ tự thời gian
 
@@ -26,4 +26,4 @@ Recall ở top 4% là tỷ lệ giao dịch rửa tiền tìm thấy khi chỉ x
 | Đặc trưng giao dịch và danh sách đã xác nhận, bỏ hình thức thanh toán | 0,340 | 0,501 (0,440 đến 0,553) | 0,983 | 88,5% (85,0% đến 91,9%) | +9,6 đến +17,2 |
 | **LightGBM tinh chỉnh trên nhóm đặc trưng chọn ở tập xác thực (được chọn)** | 0,416 | 0,518 (0,457 đến 0,569) | 0,983 | 85,5% (81,6% đến 89,2%) | +6,6 đến +14,9 |
 
-Mô hình của lần chạy này được lưu với tên `amlworld_tuned_scorer.joblib`. Thời gian huấn luyện, dò tham số và đánh giá là 1748,0 giây. Các tham số LightGBM, điểm từng lượt dò và số liệu trước khi làm tròn nằm trong [báo cáo JSON của cùng lần chạy](amlworld_training_report.json).
+Thời gian huấn luyện, dò tham số và đánh giá là 1748,0 giây. Các tham số LightGBM, điểm từng lượt dò và số liệu trước khi làm tròn nằm trong [báo cáo JSON của cùng lần chạy](amlworld_training_report.json).

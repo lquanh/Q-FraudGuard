@@ -43,9 +43,11 @@ artifacts/deploy/*
 !artifacts/deploy/quafu_ranking_misses_8_12_15_18_20261118T212601Z.json
 !artifacts/deploy/quafu_dashboard_18_20261118T220101Z.json
 !artifacts/deploy/qpu_check_quafu-anneal-qpu_20261118T204034Z.json
+!artifacts/deploy/dwave_single_read_cpu_reference.csv
 !artifacts/training/
 artifacts/training/*
 !artifacts/training/amlworld_full_operating_points.json
+!artifacts/training/amlworld_full_report.json
 !artifacts/training/amlworld_training_report.md
 !artifacts/training/amlworld_training_report.json
 

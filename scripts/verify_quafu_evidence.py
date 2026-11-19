@@ -59,7 +59,8 @@ def verify_window(row, inputs, settings, task_ids):
     totals = Counter(windows=1, top_k=int(ranked in winners), top_k_swap=int(improved in winners))
     selected = set(row["selected"])
     selected_bits = "".join("1" if ident in selected else "0" for ident in ids)
-    if len(selected) != k or int(selected_bits, 2) not in winners:
+    selected_mask = int(selected_bits, 2)
+    if len(selected) != k or selected_mask not in winners:
         raise ValueError("reported selection is not optimal")
     for index, attempt in enumerate(row["attempts"]):
         task = str(attempt["task_id"])
@@ -90,8 +91,8 @@ def verify_window(row, inputs, settings, task_ids):
     if any(label not in ("0", "1") for label in labels):
         raise ValueError("retrospective evaluation requires a binary AMLworld label for every candidate")
     positives = int("".join(labels), 2)
-    totals.update(slots=k, positive_candidates=positives.bit_count(),
-                  qpu_frauds=(positives & int(selected_bits, 2)).bit_count(),
+    totals.update(slots=k, positive_candidates=positives.bit_count(), same_selection=int(selected_mask == ranked),
+                  qpu_frauds=(positives & selected_mask).bit_count(),
                   top_k_frauds=(positives & ranked).bit_count())
 
     # CPU-only sensitivity on the identical windows. The QPU used the archived settings above.
@@ -127,7 +128,8 @@ def main():
               f"{totals['jobs']} jobs, {totals['optimal']}/{totals['shots']} optimal shots")
         print(f"  AMLworld positives among selected slots: QPU {totals['qpu_frauds']}/{totals['slots']}, "
               f"top-K {totals['top_k_frauds']}/{totals['slots']} "
-              f"({totals['positive_candidates']} positive candidate occurrences)")
+              f"({totals['positive_candidates']} positive candidate occurrences, "
+              f"identical selections in {totals['same_selection']}/{len(rows)} windows)")
         print(f"  CPU-only top-K optimum at c=0.25: max normalization {totals['max_c025']}/{len(rows)}, "
               f"raw scores {totals['raw_c025']}/{len(rows)}")
 

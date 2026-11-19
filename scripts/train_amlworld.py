@@ -142,13 +142,15 @@ def training_markdown(report: dict) -> str:
     recall_key = f"recall_at_{rate:.0%}"
     data_name = PureWindowsPath(report["data"]).name
     model_name = PureWindowsPath(report["saved_model"]).name
+    test_size = f"{report['rows'][-1]:,}".replace(",", ".")
     lines = [
         "# Đánh giá mô hình chấm điểm giao dịch trên CPU", "",
         f"Thí nghiệm dùng `{data_name}`, một mẫu giao dịch tổng hợp IBM AMLworld. "
-        "Mọi cấu hình chấm cùng một tập kiểm tra. Mô hình được chọn theo PR-AUC trên tập xác thực. "
+        "Mô hình được chọn theo PR-AUC trên tập xác thực. "
         f"Ở các cấu hình dùng danh sách tài khoản đã xác nhận, nhãn được sử dụng sau "
         f"{number(report['label_delay_minutes'] / 60, 'g')} giờ.", "",
-        f"**Kết quả của mô hình được chọn.** PR-AUC trên tập kiểm tra đạt **{number(chosen['pr_auc'])}**. "
+        f"Trên {test_size} giao dịch kiểm tra của mẫu này, mô hình `{model_name}` "
+        f"đạt PR-AUC **{number(chosen['pr_auc'])}**. "
         f"Trong {budget} giao dịch có điểm cao nhất, mô hình giữ được "
         f"**{number(chosen[recall_key], '.1%')}** số giao dịch rửa tiền của tập kiểm tra.", "",
         "## Dữ liệu theo thứ tự thời gian", "",
@@ -179,8 +181,7 @@ def training_markdown(report: dict) -> str:
         lines.append(f"| {label} | {val_ap} | {number(row['pr_auc'])} ({ap_ci}) "
                      f"| {number(row['roc_auc'])} | {number(row[recall_key], '.1%')} ({recall_ci}) | {difference} |")
     lines += [
-        "", f"Mô hình của lần chạy này được lưu với tên `{model_name}`. "
-        f"Thời gian huấn luyện, dò tham số và đánh giá là {number(report['runtime_seconds'], '.1f')} giây. "
+        "", f"Thời gian huấn luyện, dò tham số và đánh giá là {number(report['runtime_seconds'], '.1f')} giây. "
         "Các tham số LightGBM, điểm từng lượt dò và số liệu trước khi làm tròn nằm trong "
         "[báo cáo JSON của cùng lần chạy](amlworld_training_report.json).",
     ]
