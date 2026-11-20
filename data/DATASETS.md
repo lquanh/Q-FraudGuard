@@ -1,72 +1,50 @@
-# Dữ liệu dùng trong Q-FraudGuard
+# Dữ liệu và mô hình Q-FraudGuard
 
-Benchmark Quafu dùng giao dịch ngân hàng tổng hợp **IBM AMLworld HI-Small**. Điểm rủi ro của mỗi giao dịch và các tài khoản gửi, nhận xác định bài toán chọn hồ sơ trên QPU. Hai giao dịch tạo thành một cặp liên kết khi chúng có chung ít nhất một tài khoản. [Nguồn IBM AMLworld](https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml) · [Giấy phép và ghi công](licenses/LICENSES.md)
+IBM AMLworld HI-Small cung cấp giao dịch ngân hàng tổng hợp có thời điểm, tài khoản gửi, tài khoản nhận và nhãn rửa tiền. Q-FraudGuard dùng các trường giao dịch để chấm điểm. Nhãn `is_fraud` trong bản trích AMLworld biểu thị nhãn rửa tiền của nguồn và dùng để đánh giá kết quả. PaySim cung cấp một luồng giao dịch tiền di động tổng hợp riêng cho dashboard. [Nguồn và giấy phép từng bộ](licenses/LICENSES.md)
 
-## Kiểm lại 44 cửa sổ đã chạy trên chip
+## Mô hình nào được dùng?
 
-Bản trích đi kèm có 559 giao dịch riêng biệt xuất hiện trong 44 cửa sổ. Mỗi dòng chứa `transaction_id`, `risk_score`, `sender_id`, `receiver_id` và nhãn rửa tiền `is_fraud` (0 hoặc 1). Hai báo cáo JSON lưu danh sách ID theo thứ tự bit cùng tần suất các mẫu chip trả về. Bốn cột đầu cho phép khôi phục bài toán. Nhãn được ghép theo ID từ `full_scores_test.pkl` và đối chiếu với phần kiểm tra (`split=stream`) của CSV phát lại để đánh giá sau khi chọn hồ sơ. [CSV ứng viên](quafu_benchmark_candidates.csv) · [40 cửa sổ chọn trước](../artifacts/deploy/quafu_verified_hits_8_12_15_18_20261118T212255Z.json) · [4 cửa sổ thử thách](../artifacts/deploy/quafu_ranking_misses_8_12_15_18_20261118T212601Z.json)
+Dashboard chọn mô hình theo `QFG_DATASET`. `QFG_MODEL_PATH` cho phép chỉ định artifact cụ thể. Khi dùng luồng `live`, adapter và dashboard phải cùng dùng tên luồng, đường dẫn mô hình và kho hồ sơ. [Cấu hình dashboard](../dashboard/app.py) · [Hướng dẫn Core Banking](../docs/CORE_BANKING.md)
 
-Trong 559 giao dịch có 3 nhãn dương. Cả ba nằm ở tập cửa sổ chọn trước. QPU và CPU xếp theo điểm đều chọn trúng 3/130 lượt hồ sơ ở tập này, và 0/13 ở tập thử thách. Mẫu số cộng K của mỗi cửa sổ. Bốn cửa sổ thử thách được chọn vì top-K bỏ lỡ tối ưu QUBO nên cần báo cáo riêng khi đánh giá chất lượng phát hiện.
-
-Chạy từ thư mục gốc với các tệp trên. Lệnh chỉ dùng thư viện chuẩn Python.
-
-```powershell
-python scripts/verify_quafu_evidence.py
-```
-
-## Chọn dữ liệu để chạy dashboard hoặc huấn luyện
-
-| Mục đích | Dữ liệu | Cách dùng |
+| Cấu hình | Artifact trong `artifacts/models/` | Phạm vi |
 |---|---|---|
-| Mở dashboard cục bộ | `paysim.csv`, mẫu PaySim gồm 99.416 giao dịch | Đặt `QFG_DATASET=paysim`. Mẫu và mô hình đi kèm dự án. |
-| Đánh giá các mô hình chấm điểm trên CPU | `amlworld_hi_small_4d.csv`, mẫu bốn ngày từ 3 đến 6/9/2022 | Là dữ liệu của báo cáo so sánh các bộ đặc trưng và cấu hình LightGBM. [Báo cáo bốn ngày](../artifacts/training/amlworld_training_report.md) |
-| Tạo điểm ứng viên cho một lần chạy QPU mới | `downloads/ibm_amlworld.zip`, giao dịch HI-Small từ 1 đến 10/9/2022 | Script huấn luyện đọc trực tiếp thành viên `HI-Small_Trans.csv` và chia giao dịch theo thời gian. |
-| Đánh giá theo vụ rửa tiền | `ibm_amlworld/HI-Small_Patterns.txt` | Trích thành viên cùng tên từ ZIP IBM khi cần đối chiếu theo vụ. |
+| `amlworld_full` (mặc định) | `amlworld_full_scorer.joblib` | Mẫu mười ngày, có đặc trưng tài khoản đã xác nhận và loại đặc trưng hình thức thanh toán. Nguồn điểm cho benchmark Haituo. |
+| `amlworld_tuned` | `amlworld_noformat_tuned_scorer.joblib` | Biến thể bốn ngày bỏ hình thức thanh toán. Mô hình được chọn trong báo cáo so sánh bốn ngày có tên riêng là `amlworld_tuned_scorer.joblib`. |
+| `amlworld` | `amlworld_lightgbm_scorer.joblib` | Mô hình cơ sở trên mẫu hai ngày. |
+| `paysim` | `paysim_lightgbm_scorer.joblib` | Mô hình và mẫu PaySim 99.416 giao dịch đi kèm dự án. |
+| Sandbox TGNN, qua `QFG_MODEL_PATH` | `amlworld_tgnn_pilot_scorer.joblib` | Mẫu hai ngày, trọng số TGNN 5% trong cấu hình pilot. [Lệnh huấn luyện](../docs/CORE_BANKING.md#tgnn-trong-bước-chấm-điểm) |
 
-**Tạo luồng AMLworld đầy đủ.** Từ thư mục gốc, lệnh dưới huấn luyện mô hình, tạo `data/amlworld_hi_small_full_stream.csv` cho dashboard và ghi `artifacts/training/full_scores_test.pkl` cho benchmark. CSV phát lại chứa 20.000 dòng cuối của tập xác thực làm lịch sử, sau đó là 1.015.448 giao dịch thuộc tập kiểm tra. [Hướng dẫn chạy trên chip](../docs/TRIEN_KHAI_QPU.md)
+### Kết quả theo từng tập kiểm tra
+
+| Thí nghiệm AMLworld | Huấn luyện | Xác thực | Kiểm tra | Nhãn dương trong tập kiểm tra | Average Precision |
+|---|---:|---:|---:|---:|---:|
+| Mô hình sàng lọc mười ngày, 1–10/9/2022 | 3.046.342 | 1.015.447 | 1.015.448 | 1.143 | 0,4341 |
+| So sánh cấu hình bốn ngày, 3–6/9/2022 | 827.730 | 275.910 | 275.911 | 339 | 0,518 ở mô hình được chọn |
+| Pilot TGNN hai ngày, 3–4/9/2022 | 248.887 | 82.962 | 82.963 | 168 | 0,4046 ở đối chứng và 0,4166 với TGNN 5% |
+
+Mỗi thí nghiệm chia giao dịch theo thời gian. Khi so sánh hai cấu hình, dùng cùng tập kiểm tra và cùng ngân sách cảnh báo trong một thí nghiệm. Mô hình mười ngày dùng ngưỡng vận hành nhắm recall 96% trên tập xác thực. Trên tập kiểm tra, ngưỡng này giữ 1.089 nhãn dương trong 129.766 cảnh báo. [Báo cáo mười ngày](../artifacts/training/amlworld_full_report.json) · [Kết quả từng ngưỡng](../artifacts/training/amlworld_full_operating_points.json) · [Báo cáo bốn ngày](../artifacts/training/amlworld_training_report.md) · [Đối chứng TGNN](../artifacts/training/amlworld_tgnn_pilot_comparison.json)
+
+## Tái lập các luồng dữ liệu
+
+Chế độ `recorded` đọc 64 giao dịch đã chấm điểm, ngưỡng điều tra và mã băm mô hình trong CSV đi kèm. Dashboard đối chiếu 18 ứng viên và 4 mã hồ sơ với chuỗi bit trong bản ghi Quafu. Chế độ `replay` có thể chạy trên mẫu PaySim đi kèm bằng `QFG_DATASET=paysim`. [Dữ liệu phiên Haituo](quafu_dashboard_replay.csv) · [Bản ghi phần cứng](../artifacts/deploy/quafu_dashboard_18_20261118T220101Z.json) · [Chạy dashboard](../README.md#chạy-phiên-minh-họa)
+
+Để tạo mô hình AMLworld trên máy mới, đặt gói IBM tại `data/downloads/ibm_amlworld.zip`. Lệnh đầu đọc `HI-Small_Trans.csv`, huấn luyện trên kỳ 1–10/9 với 5.077.237 giao dịch chia theo thời gian, xuất điểm cho benchmark và CSV phát lại kỳ kiểm tra. CSV gồm 20.000 giao dịch xác thực làm lịch sử và 1.015.448 giao dịch kiểm tra. Chế độ `loop` đọc đủ 5.078.345 giao dịch trong thành viên ZIP, kể cả giao dịch sau ngày 10/9. Hai lệnh sau tạo mẫu hai và bốn ngày. [Nguồn IBM AMLworld](https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml) · [Mã huấn luyện](../scripts/train_amlworld_full.py) · [Mã SHA-256 của các ZIP](downloads/SHA256SUMS.txt)
 
 ```powershell
 python scripts/train_amlworld_full.py --target-recall 0.96 --stream-output data/amlworld_hi_small_full_stream.csv --save-test-scores
-```
-
-Để đối chiếu số liệu sàng lọc và chuyển chuyên viên trong README, lọc các dòng có `risk_score` lớn hơn hoặc bằng ngưỡng tương ứng trong tệp điểm kiểm tra, rồi đếm số dòng và tổng nhãn `is_fraud`. [Ngưỡng sàng lọc ở mục tiêu 0,96](../artifacts/training/amlworld_full_operating_points.json) · [Ngưỡng chuyển chuyên viên](../artifacts/models/amlworld_full_scorer.review.json)
-
-Để tạo mẫu hai ngày hoặc bốn ngày cho các thí nghiệm chấm điểm đã lưu, chạy lệnh tương ứng.
-
-```powershell
 python scripts/prepare_amlworld.py
 python scripts/prepare_amlworld.py --days 4 --output data/amlworld_hi_small_4d.csv
 ```
 
-## Mô hình nào được dùng?
+`full_scores_test.pkl` trong `artifacts/training/` chứa điểm, tài khoản và nhãn để tính lại số hồ sơ ở từng ngưỡng. Ngưỡng chuyển chuyên viên nhắm 2% lưu lượng trên tập xác thực. Trên 1.015.448 giao dịch kiểm tra của `amlworld_full`, 31.407 giao dịch qua ngưỡng, trong đó 925 có nhãn rửa tiền (precision 2,95%). Tệp `.review.json` lưu ngưỡng và mã băm mô hình. Khi đối chiếu theo vụ rửa tiền, dùng thêm `HI-Small_Patterns.txt` từ ZIP. [Ngưỡng chuyển chuyên viên](../artifacts/models/amlworld_full_scorer.review.json)
 
-Dashboard đọc `QFG_DATASET` để chọn mô hình. Mặc định là `amlworld_full`. Nếu có `QFG_MODEL_PATH`, đường dẫn đó được ưu tiên. Bảng dưới nhận diện sáu tệp `.joblib` hiện có trong thư mục mô hình cục bộ. Các tệp JSON đi kèm lưu ngưỡng hoặc chỉ số đánh giá. [Ánh xạ trong dashboard](../dashboard/app.py)
+## Kiểm lại 44 cửa sổ đã chạy trên chip
 
-| Cấu hình dashboard | Tệp trong `artifacts/models/` | Vai trò |
-|---|---|---|
-| `amlworld_full` (mặc định) | `amlworld_full_scorer.joblib` | Luồng AMLworld mười ngày chia theo thời gian, có danh sách tài khoản đã xác nhận, bỏ hình thức thanh toán |
-| `amlworld` | `amlworld_lightgbm_scorer.joblib` | Mô hình cơ sở trên mẫu hai ngày |
-| `amlworld_tuned` | `amlworld_noformat_tuned_scorer.joblib` | Mô hình bốn ngày đã tinh chỉnh, bỏ hình thức thanh toán |
-| `paysim` | `paysim_lightgbm_scorer.joblib` | Mô hình cho luồng PaySim |
-| Chọn qua đường dẫn | `amlworld_tuned_scorer.joblib` | Mô hình được chọn trong báo cáo bốn ngày có dùng hình thức thanh toán, PR-AUC kiểm tra 0,518 |
-| Chọn qua đường dẫn | `amlworld_confirmed_scorer.joblib` | Biến thể thử nghiệm có dùng danh sách tài khoản đã xác nhận |
+Bản trích có 559 giao dịch riêng biệt. Bốn trường `transaction_id`, `risk_score`, `sender_id` và `receiver_id` cho phép dựng lại QUBO. Hai báo cáo JSON lưu thứ tự ứng viên và tần suất mẫu đo. Chạy `python scripts/verify_quafu_evidence.py` để kiểm tra nghiệm và đối chiếu nhãn sau khi chọn. [CSV ứng viên](quafu_benchmark_candidates.csv) · [Mã kiểm chứng](../scripts/verify_quafu_evidence.py)
 
-| Phép đánh giá | Ngày giao dịch trong gói dữ liệu | Huấn luyện | Xác thực | Kiểm tra | Rửa tiền trên tập kiểm tra | PR-AUC kiểm tra |
-|---|---|---:|---:|---:|---:|---:|
-| Mô hình được chọn trong báo cáo bốn ngày | 3–6/9/2022 | 827.730 | 275.910 | 275.911 | 339 | 0,518 |
-| Mô hình của luồng `amlworld_full` | 1–10/9/2022 | 3.046.342 | 1.015.447 | 1.015.448 | 1.143 | 0,434 |
+| Nhóm cửa sổ | Lượt có nhãn rửa tiền trong danh sách QPU | Lượt có nhãn trong danh sách Top-K |
+|---|---:|---:|
+| 40 cửa sổ chọn trước | 3/130 | 3/130 |
+| 4 cửa sổ chọn vì Top-K bỏ lỡ tối ưu QUBO | 0/13 | 0/13 |
 
-PR-AUC ở đây là average precision, tính trên toàn bộ dải điểm của từng tập kiểm tra. Báo cáo huấn luyện mười ngày ghi ngưỡng nhắm recall 95% trên tập xác thực. Luồng hiện tại dùng ngưỡng nhắm 96%. Bảng ngưỡng trong README ghi kết quả của cả hai trên cùng tập điểm mười ngày. [Báo cáo bốn ngày](../artifacts/training/amlworld_training_report.md) · [Báo cáo mười ngày](../artifacts/training/amlworld_full_report.json) · [Kết quả từng ngưỡng](../artifacts/training/amlworld_full_operating_points.json)
-
-Các bản ghi Quafu chỉ rõ nguồn điểm `full_scores_test.pkl` và lưu mã giao dịch đã chọn. Điểm và tài khoản của cả 559 giao dịch khớp với bản xuất của luồng đầy đủ. Mã SHA-256 của tệp mô hình cục bộ được lưu cùng ngưỡng chuyển chuyên viên. Bản ghi chip chưa lưu mã băm mô hình tại thời điểm chạy. [Ngưỡng và mã băm của mô hình mặc định](../artifacts/models/amlworld_full_scorer.review.json)
-
-## Các ZIP nguồn lưu cục bộ
-
-| Tệp trong `data/downloads/` | Nội dung |
-|---|---|
-| `ibm_amlworld.zip` | Các bộ giao dịch AML tổng hợp, tài khoản và danh mục mẫu rửa tiền |
-| `paysim_full.zip` | 6.362.620 giao dịch tiền di động tổng hợp |
-| `elliptic.zip` | Đồ thị Bitcoin gồm 203.769 giao dịch, 234.355 cạnh và các đặc trưng |
-| `bank_account_fraud.zip` | Bộ Base và 5 biến thể, mỗi bộ 1.000.000 bản ghi |
-
-Dự án lưu mã SHA-256 cho bốn ZIP để kiểm tra bản tải về. Elliptic và Bank Account Fraud Suite nằm trong kho nghiên cứu cục bộ. Các mẫu và kết quả dùng cho prototype được chỉ rõ ở hai mục trên. [Mã SHA-256](downloads/SHA256SUMS.txt) · [Nguồn tải và điều khoản từng bộ](licenses/LICENSES.md)
+Mẫu số cộng số suất K qua các cửa sổ. Hai nhóm ghi nhận chất lượng nghiệm QUBO và số nhãn theo cùng ngân sách điều tra. [40 cửa sổ chọn trước](../artifacts/deploy/quafu_verified_hits_8_12_15_18_20261118T212255Z.json) · [4 cửa sổ chọn riêng](../artifacts/deploy/quafu_ranking_misses_8_12_15_18_20261118T212601Z.json)

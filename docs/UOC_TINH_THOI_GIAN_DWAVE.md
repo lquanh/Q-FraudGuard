@@ -1,62 +1,91 @@
-# CPU và QPU khi chọn hồ sơ từ 40, 80 và 160 cảnh báo
+# Ước tính thời gian lấy mẫu QPU D-Wave
 
-Bộ giải lượng tử có thể vượt bộ giải cổ điển. Với bài toán hiện tại của Q-FraudGuard, **CPU vẫn là lựa chọn thực tế**. Chọn 10 trong 40 cảnh báo đã khả thi về số qubit. Thách thức là trả về một danh sách tốt ngang cách chọn gần đúng trên CPU (heuristic). CPU đang mất khoảng **1,6–3,2 mili giây** cho bước này ở hai cỡ cửa sổ 40 và 80 cảnh báo.
+Với **1.000 lượt đọc cùng một QUBO đã nạp**, thời gian lấy mẫu trên máy tham chiếu `Advantage2_system2` ước tính là **57,6–135,6 ms**. Số lượt đọc là tham số do nhóm thí điểm chọn trước. Mỗi lượt cho một danh sách ứng viên. Hệ thống kiểm tra danh sách chọn đúng K hồ sơ, chấm điểm theo cùng hàm QUBO rồi giữ danh sách tốt nhất. Chất lượng nghiệm đã kiểm chứng trên Quafu Haituo được trình bày trong hồ sơ riêng. [Kết quả kiểm chứng nghiệm Haituo](TRIEN_KHAI_QPU.md)
 
-Với cách mã hóa hiện tại, mỗi cảnh báo cần một biến nhị phân. Điều kiện “chọn đúng 10” tạo liên kết giữa cả **780 cặp** trong 40 biến (`40 × 39 / 2`). Trên máy ủ lượng tử D-Wave, một biến có thể cần một chuỗi qubit vật lý để nối đủ các cặp. Các ánh xạ trong bảng đã được kiểm tra trên sơ đồ **Zephyr Z12 lý tưởng**. Số qubit thực dùng có thể thay đổi theo từng chip. [Cách D-Wave ánh xạ biến logic lên qubit vật lý](https://docs.dwavequantum.com/en/latest/quantum_research/embedding_intro.html)
+## Giả định và cách tính
 
-| Bài toán | Qubit vật lý trong ánh xạ đã kiểm tra | Heuristic CPU, trung vị | MILP trên CPU, trung vị, có chứng nhận tối ưu |
-|---|---:|---:|---:|
-| Chọn 10 trong 40 | 160 | 1,64 ms | 6,59 ms |
-| Chọn 20 trong 80 | 560 | 3,20 ms | 9,48 ms |
-| Chọn 40 trong 160 | 1.920 | 9,53 ms | 20,56 ms |
+Kịch bản đặt thời gian ủ là **20 µs**. Theo thông số máy tham chiếu, thời gian đọc điển hình nằm trong khoảng **17–95 µs** tùy số qubit và độ trễ sau khi đọc là **20,6 µs** mỗi mẫu. Khi giữ các tham số này, thời gian lấy mẫu ước tính bằng `số lượt đọc × (thời gian ủ + thời gian đọc + độ trễ sau khi đọc)`. Một mili giây (ms) bằng 1.000 micro giây (µs). [Thông số Advantage2_system2](https://docs.dwavequantum.com/en/latest/quantum_research/solver_properties_specific.html#advantage2-system2) · [Chu kỳ ủ và đọc](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#anneal-read-cycle)
 
-Phép đo CPU do tác giả cung cấp dùng cùng **1.920 ứng viên AMLworld tổng hợp**, chia thành 48, 24 và 12 cửa sổ tương ứng, với một luồng tính toán BLAS. Độ hụt trung bình của heuristic so với điểm QUBO tối ưu là **1,0%** ở 40 cảnh báo, **2,2%** ở 80 và **3,3%** ở 160.
+| Số lượt đọc cùng một QUBO | Phần ủ ước tính (ms) | Phần đọc và chờ ước tính (ms) | Tổng thời gian lấy mẫu ước tính (ms) |
+|---:|---:|---:|---:|
+| 1 | 0,020 | 0,0376–0,1156 | 0,0576–0,1356 |
+| 10 | 0,20 | 0,376–1,156 | 0,576–1,356 |
+| 100 | 2 | 3,76–11,56 | 5,76–13,56 |
+| **1.000** | **20** | **37,6–115,6** | **57,6–135,6** |
+| 10.000 | 200 | 376–1.156 | 576–1.356 |
+| 100.000 | 2.000 | 3.760–11.560 | 5.760–13.560 |
 
-## Thời gian lấy mẫu trên QPU đặt tại công ty
+Một cửa sổ mới có tập cảnh báo hoặc hệ số QUBO khác cần được lập trình lại. Dùng **24,5 ms** làm giả định cho một lần lập trình máy tham chiếu, một tác vụ gồm một lần nạp và 1.000 lượt đọc dự kiến chiếm **82,1–160,1 ms** cho hai bước này. Nếu số lượt vượt giới hạn một tác vụ, tính thêm lần lập trình cho mỗi phần cần gửi. Để dự toán thời gian đến bàn chuyên viên, cộng cả dựng bài, truyền dữ liệu, xếp hàng, kiểm tra danh sách và ghi kết quả. [Thông số lập trình tham chiếu](https://docs.dwavequantum.com/en/latest/quantum_research/solver_properties_specific.html#advantage2-system2) · [Các thành phần thời gian dịch vụ](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html) · [Giới hạn lượt đọc](https://docs.dwavequantum.com/en/latest/quantum_research/solver_properties_all.html#num-reads-range)
 
-Giả sử công ty dùng phần cứng tương đương `Advantage2_system2`. Đồng hồ bắt đầu sau khi bài QUBO đã được nạp và chỉ tính thời gian lấy mẫu trên chip (`qpu_sampling_time`). Cách tính này bỏ thời gian truyền mạng, xếp hàng, nạp hệ số và xử lý kết quả trên CPU. Nạp hệ số vẫn là một thao tác vật lý khi dùng máy tại chỗ. [Chu kỳ lập trình và lấy mẫu của D-Wave](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#programming-cycle)
+## Chọn ngân sách lấy mẫu cho thí điểm
 
-Mỗi lượt đọc trả về một phương án ứng viên cho cả cửa sổ. Với lịch ủ **20 µs**, thời gian đọc **17–95 µs** và thời gian ổn định chip **20,6 µs**, tổng thời gian cho **R lượt ≈ R × (57,6–135,6) µs**. Dải đọc của hãng bao quát từ một qubit đến toàn chip. Trên cùng một QUBO, **1.000 lượt** mất khoảng **57,6–135,6 ms**, **10.000 lượt** mất **0,576–1,356 s** và **một triệu lượt** mất **57,6–135,6 s**. Nếu chia thành nhiều lô, các con số này là tổng thời gian lấy mẫu của các lô. [Thông số Advantage2_system2](https://docs.dwavequantum.com/en/latest/quantum_research/solver_properties_specific.html#advantage2-system2) · [Cách D-Wave tính thời gian lấy mẫu](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#anneal-read-cycle)
+Với ngân sách đã dành riêng cho lấy mẫu, chia ngân sách cho thời gian của một lượt rồi làm tròn xuống. Ví dụ, nếu dành **100 ms** cho một cửa sổ đã nạp, mô hình cho khoảng **737–1.736 lượt đọc**. Khi nghiệm thu, ngân hàng có thể thay đổi số lượt đọc, giữ cố định các hồ sơ cùng số suất K, rồi so sánh điểm QUBO của danh sách thu được với kết quả đối chiếu trên CPU.
 
-Khi đầu ra cần **một danh sách mỗi cửa sổ**, CPU chạy heuristic một lần. Bảng cho biết số lượt đọc nguyên lớn nhất mà tổng thời gian lấy mẫu QPU vẫn thấp hơn trung vị CPU, ở hai đầu của dải tham chiếu. Nếu đầu ra cần một triệu phương án cho cùng một cửa sổ, dự án chưa đo tốc độ sinh mẫu tương ứng trên CPU.
+| Ngân sách lấy mẫu giả định | Số lượt đọc ước tính ở hai đầu dải |
+|---:|---:|
+| 100 ms | 737–1.736 |
+| 500 ms | 3.687–8.680 |
+| 1 giây | 7.374–17.361 |
+| 5 giây | 36.873–86.805 |
+| 15 giây | 110.619–260.416 |
 
-| Bài toán | CPU cho một danh sách | Ở 135,6 µs/lượt | Ở 57,6 µs/lượt |
-|---|---:|---:|---:|
-| Chọn 10 trong 40 | 1,64 ms | 12 lượt | 28 lượt |
-| Chọn 20 trong 80 | 3,20 ms | 23 lượt | 55 lượt |
-| Chọn 40 trong 160 | 9,53 ms | 70 lượt | 165 lượt |
+## Quy mô cửa sổ và ánh xạ lên chip
 
-Ở mức mặc định **100 lượt/cửa sổ** của dự án, để nhanh hơn CPU ở cỡ 160 cảnh báo, mỗi chu kỳ cần dưới **95,3 µs** (`9,53 ms / 100`), tức phần đọc qubit phải dưới **54,7 µs** sau khi trừ phần ủ và ổn định. Dự án chưa đo thời gian đọc của ánh xạ này trên chip thật hoặc số lượt cần để chọn đúng 40 hồ sơ với điểm QUBO ngang heuristic. [Cấu hình và trường thời gian của bộ giải D-Wave](../src/qf_guard/solvers.py)
+QUBO kết hợp điểm rủi ro với liên kết giữa những hồ sơ dùng chung tài khoản. Ràng buộc chọn đủ K suất tạo liên kết giữa mọi cặp biến. Các ánh xạ dưới đây đã được kiểm tra trên đồ thị Zephyr Z12 lý tưởng. Khi thử nghiệm, cần đối chiếu với danh sách qubit và liên kết đang hoạt động trên solver được cấp. [Mã kiểm tra ánh xạ](../scripts/benchmark_zephyr_windows.py) · [Hướng dẫn ánh xạ của D-Wave](https://docs.dwavequantum.com/en/latest/quantum_research/embedding_intro.html)
 
-### Một triệu cảnh báo đã được chấm rủi ro
+| Chọn K / N cảnh báo | Qubit vật lý trong ánh xạ Z12 lý tưởng |
+|---:|---:|
+| 10 / 40 | 160 |
+| 12 / 48 | 216 |
+| 16 / 64 | 352 |
+| 20 / 80 | 520 |
+| 24 / 96 | 720 |
+| 28 / 112 | 952 |
+| 32 / 128 | 1.216 |
+| 36 / 144 | 1.512 |
+| 40 / 160 | 1.840 |
+| 44 / 176 | 2.200 |
+| 46 / 184 | 2.392 |
 
-Chia **1.000.000 cảnh báo** thành **6.250 cửa sổ độc lập**, mỗi cửa sổ chọn 40 trong 160 hồ sơ. Nếu xử lý tuần tự, thời gian chọn hồ sơ trên CPU ước tính **59,56 s** (`6.250 × 9,53 ms`). Đây là ngoại suy từ trung vị của 12 cửa sổ đã đo. Phía QPU dùng cùng số cửa sổ và cộng thời gian lấy mẫu.
+## Lưu lượng giao dịch trước sàng lọc
 
-| Lượt đọc mỗi cửa sổ | QPU cho một cửa sổ | QPU cho 6.250 cửa sổ | So với CPU ở mức 59,56 s |
-|---:|---:|---:|---|
-| 50 | 2,88–6,78 ms | 18,00–42,38 s | Lấy mẫu QPU nhanh hơn khoảng 1,4–3,3 lần |
-| 100 | 5,76–13,56 ms | 36,00–84,75 s | Phụ thuộc thời gian đọc thực tế |
-| 1.000 | 57,6–135,6 ms | 360–847,5 s | CPU nhanh hơn khoảng 6–14 lần |
+Lấy tỷ lệ **129.766 cảnh báo trên 1.015.448 giao dịch** ở ngưỡng vận hành AMLworld làm giả định đầu vào. Chia số cảnh báo cho **160** để ước tính số cửa sổ chọn 40 hồ sơ. Ví dụ, với một triệu giao dịch mỗi giây, mô hình cho khoảng 127.792 cảnh báo và 798,70 cửa sổ mỗi giây. Nếu dành một lượt đọc cho mỗi cửa sổ đã nạp, tổng thời gian lấy mẫu ước tính là **46–108 ms** cho mỗi giây dữ liệu đến. Số lượt để đạt chất lượng mong muốn sẽ được xác định trong thí điểm. [Số cảnh báo ở ngưỡng vận hành](../artifacts/training/amlworld_full_operating_points.json)
 
-Nếu 50 lượt cho một danh sách tốt ngang CPU, phần lấy mẫu QPU tiết kiệm khoảng **17–42 giây** trên một triệu cảnh báo trong kịch bản này. Tăng số cửa sổ cùng kích thước nhân thời gian của cả hai bên với cùng một hệ số. Nếu muốn xét chung cả triệu cảnh báo trong **một** bài QUBO, riêng mã hóa hiện tại đã cần một triệu biến logic. Chip tham chiếu có 4.506 qubit vật lý. [Số qubit của Advantage2_system2](https://docs.dwavequantum.com/en/latest/quantum_research/solver_properties_specific.html#advantage2-system2)
+| Giao dịch/s giả định | Cảnh báo/s dự kiến | Cửa sổ/s dự kiến | Giây lấy mẫu QPU ước tính cho một giây dữ liệu |
+|---:|---:|---:|---:|
+| 10.000 | 1.278 | 7,99 | 0,0005–0,0011 |
+| 50.000 | 6.390 | 39,93 | 0,0023–0,0054 |
+| 100.000 | 12.779 | 79,87 | 0,0046–0,0108 |
+| 250.000 | 31.948 | 199,67 | 0,0115–0,0271 |
+| 500.000 | 63.896 | 399,35 | 0,0230–0,0542 |
+| 750.000 | 95.844 | 599,02 | 0,0345–0,0812 |
+| **1.000.000** | **127.792** | **798,70** | **0,0460–0,1083** |
+| 1.500.000 | 191.688 | 1.198,05 | 0,0690–0,1625 |
+| 2.000.000 | 255.584 | 1.597,40 | 0,0920–0,2166 |
+| 3.000.000 | 383.376 | 2.396,10 | 0,1380–0,3249 |
+| 5.000.000 | 638.959 | 3.993,50 | 0,2300–0,5415 |
+| 7.500.000 | 958.439 | 5.990,24 | 0,3450–0,8123 |
+| 9.000.000 | 1.150.127 | 7.188,29 | 0,4140–0,9747 |
+| 10.000.000 | 1.277.919 | 7.986,99 | 0,4601–1,0830 |
+| 15.000.000 | 1.916.878 | 11.980,49 | 0,6901–1,6246 |
+| 20.000.000 | 2.555.837 | 15.973,98 | 0,9201–2,1661 |
+| 25.000.000 | 3.194.797 | 19.967,48 | 1,1501–2,7076 |
 
-## Thời gian từ lúc gửi đến lúc nhận kết quả
+Các phép nhân dùng số cửa sổ chưa làm tròn. Với R lượt đọc mỗi cửa sổ, nhân thời gian trong cột cuối với R. Khi lập kế hoạch công suất, tính thêm số tác vụ cần nạp, phần hàng đợi và các bước nghiệp vụ cho từng cửa sổ. Ngân hàng có thể thay tỷ lệ cảnh báo của dữ liệu tổng hợp bằng tỷ lệ quan sát trong thí điểm.
 
-Giả sử một QPU tương lai trả về danh sách có chất lượng ngang heuristic trong **5 ms**, tính cả gửi bài, chờ, lấy mẫu và nhận kết quả. Với 40 cảnh báo, CPU vẫn nhanh hơn khoảng **3,1 lần** nếu lấy thời gian CPU làm tròn là 1,6 ms. Với 160 cảnh báo, QPU sẽ nhanh hơn heuristic đã đo khoảng **1,9 lần** (`9,53 / 5`), tiết kiệm khoảng **4,5 ms mỗi cửa sổ** (`9,53 − 5 = 4,53 ms`).
+## Khi đầu vào đã là cảnh báo
 
-**5 ms là giả định để tính ngưỡng.** Trên `Advantage2_system2`, D-Wave công bố riêng thời gian điển hình để nạp một bài mới đã khoảng **24,5 ms**. [Thông số QPU Advantage2_system2 của D-Wave](https://docs.dwavequantum.com/en/latest/quantum_research/solver_properties_specific.html#advantage2-system2)
+Nếu ngân hàng chuyển trực tiếp luồng cảnh báo, lấy số cảnh báo mỗi giây chia cho 160. Bảng giả định mỗi cửa sổ đủ 160 cảnh báo và đã nạp xong trước một lượt đọc.
 
-Thêm qubit giúp xét chung nhiều cảnh báo hơn. Nếu ngân hàng vẫn xử lý từng nhóm 40, kể cả một QPU trả lời tức thì cũng chỉ tiết kiệm khoảng **1,6 ms** ở bước chọn hồ sơ, theo trung vị đã đo. Lý do đáng phát triển tiếp là khi điều tra viên cần xét chung những nhóm lớn hơn để lần theo dòng tiền và QPU có thể trả về danh sách tốt hơn trong thời hạn thực tế của ca trực.
+| Cảnh báo/s giả định | Cửa sổ/s dự kiến | Giây lấy mẫu QPU ước tính cho một giây dữ liệu |
+|---:|---:|---:|
+| 100.000 | 625,00 | 0,0360–0,0847 |
+| 250.000 | 1.562,50 | 0,0900–0,2119 |
+| 500.000 | 3.125,00 | 0,1800–0,4237 |
+| **1.000.000** | **6.250,00** | **0,3600–0,8475** |
+| 1.500.000 | 9.375,00 | 0,5400–1,2713 |
+| 2.000.000 | 12.500,00 | 0,7200–1,6950 |
+| 3.000.000 | 18.750,00 | 1,0800–2,5425 |
+| 5.000.000 | 31.250,00 | 1,8000–4,2375 |
 
-### Một tác vụ trên Advantage2_system2 hiện tại
-
-Với một cửa sổ mới, QPU nạp hệ số QUBO một lần rồi lấy số mẫu yêu cầu. Bảng dùng lịch ủ 20 µs và cùng dải thời gian đọc như trên cho cả ba ánh xạ 160, 560 và 1.920 qubit vật lý. Muốn tính sát từng ánh xạ cần đường cong thời gian đọc của đúng chip (`problem_timing_data`). [Cách Ocean tính theo số qubit đã nhúng](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#estimating-access-time)
-
-| Một bài QUBO mới | Tổng thời gian lấy mẫu | Nạp 24,5 ms + lấy mẫu | Nếu cộng 1 ms ổn định sau nạp |
-|---|---:|---:|---:|
-| 1 mẫu | 0,058–0,136 ms | 24,56–24,64 ms | 25,56–25,64 ms |
-| 100 mẫu trong cùng tác vụ (mặc định `dwave-qpu`) | 5,76–13,56 ms | 30,26–38,06 ms | 31,26–39,06 ms |
-
-Phép tính dùng thời gian nạp điển hình cộng số mẫu nhân với thời gian một chu kỳ. Cột cuối minh họa mức chờ ổn định 1 ms thường gặp trong hướng dẫn của hãng. Khi có kết quả thật, `qpu_programming_time` đã bao gồm khoản chờ này. [Chu kỳ lập trình và lấy mẫu của D-Wave](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#programming-cycle) · [Mặc định số mẫu trong dự án](../src/qf_guard/solvers.py)
-
-Thời gian **từ lúc gửi đến lúc nhận danh sách** còn gồm khởi tạo cấp thấp, truyền mạng, xếp hàng và xử lý kết quả. Dự án chưa có số đo đầu-cuối trên D-Wave cho ba cỡ cửa sổ này. Ở nhóm 160 cảnh báo, trung vị **9,53 ms** của heuristic CPU vẫn thấp hơn riêng thời gian nạp bài điển hình trên D-Wave. Để đối chiếu với phần cứng đã chạy, trên **Quafu Haituo** ở 18 qubit, trung vị từ lúc gửi đến lúc nhận lô 1.024 mẫu là **2,78 giây**, và từ lúc bắt đầu xử lý đến khi xác minh nghiệm là **2,83 giây** trên 10 cửa sổ. [Đồng hồ dịch vụ D-Wave](https://docs.dwavequantum.com/en/latest/quantum_research/operation_timing.html#qmi-timing) · [Bản ghi Haituo](../artifacts/deploy/quafu_verified_hits_8_12_15_18_20261118T212255Z.json)
+Ở mức một triệu cảnh báo/giây, ngân sách trung bình cho một cửa sổ là 160 µs. Một lượt đọc dự kiến dùng 36–84,75% ngân sách đó. Tại ngân hàng, thời gian phản hồi được tính từ lúc nhận giao dịch đến lúc danh sách đã xác minh xuất hiện trên bàn chuyên viên. Đây là chỉ tiêu nghiệm thu cho toàn bộ quy trình.

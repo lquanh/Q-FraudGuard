@@ -13,8 +13,8 @@ REASON_LABELS = {
     "SHARED_DEVICE": "Thiết bị được dùng bởi nhiều tài khoản",
     "RAPID_ACTIVITY": "Tần suất giao dịch tăng nhanh trong cửa sổ ngắn",
     "CROSS_BORDER": "Giao dịch ngoài thị trường hoạt động chính",
-    "NETWORK_PATTERN": "Quan hệ mạng có fan-in, fan-out hoặc dòng tiền đáng ngờ",
-    "MODEL_HIGH_RISK": "Mô hình có giám sát ước lượng rủi ro cao",
+    "NETWORK_PATTERN": "Graph Score cao từ quan hệ và hoạt động của các tài khoản",
+    "MODEL_HIGH_RISK": "Tín hiệu từ mô hình Supervised Learning",
     "ANOMALY": "Mẫu giao dịch khác biệt so với dữ liệu huấn luyện",
     "CONNECTED_SELECTION": "Được chọn cùng các giao dịch có quan hệ đáng ngờ",
 }
@@ -40,6 +40,30 @@ def reason_codes(row: Mapping[str, Any], max_reasons: int = 4) -> list[str]:
 
 def reason_text(codes: list[str] | tuple[str, ...]) -> str:
     return "; ".join(REASON_LABELS.get(code, code) for code in codes)
+
+
+def review_signals(record: Mapping[str, Any]) -> tuple[list[str], list[str]]:
+    """Translate stored reasons for review and identify fields that need corroboration."""
+    codes = record.get("reason_codes")
+    if isinstance(codes, str):
+        codes = codes.split("|")
+    elif not isinstance(codes, (list, tuple)):
+        return [], []
+    device = str(record.get("device_id") or "").strip().upper()
+    balances = ("old_balance_sender", "new_balance_sender", "old_balance_receiver", "new_balance_receiver")
+    signals, gaps = [], []
+    for code in dict.fromkeys(filter(None, codes)):
+        if code == "SHARED_DEVICE" and device in ("", "UNKNOWN", "UNKNOWN_DEVICE"):
+            gaps.append("Cần mã thiết bị để đối chiếu tín hiệu dùng chung thiết bị.")
+        elif code in ("BALANCE_DRAIN", "BALANCE_MISMATCH") and not any(record.get(key) for key in balances):
+            gaps.append("Cần sao kê để đối chiếu số dư trước và sau giao dịch.")
+        elif code == "CROSS_BORDER" and str(record.get("country") or "").upper() in ("", "UNKNOWN"):
+            gaps.append("Cần thông tin quốc gia để đối chiếu tín hiệu xuyên biên giới.")
+        elif code == "NETWORK_PATTERN" and record.get("graph_model") == "tgnn":
+            signals.append("TGNN Score cao từ lịch sử liên kết giao dịch")
+        else:
+            signals.append(REASON_LABELS.get(code, code))
+    return signals, list(dict.fromkeys(gaps))
 
 
 def risk_band(score: float) -> str:

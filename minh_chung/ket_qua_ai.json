@@ -1,0 +1,26 @@
+{
+  "source": "IBM AMLworld HI-Small | tập kiểm tra mười ngày",
+  "rows": 1015448,
+  "labelled": 1143,
+  "average_precision": 0.434139049049451,
+  "top_4_percent": {
+    "budget": 40618,
+    "baseline_from_run_json": 956,
+    "selected_from_scores": 975,
+    "additional_labelled": 19
+  },
+  "alerts_at_95_percent_recall_retrospective": {
+    "baseline_from_run_json": 160747,
+    "selected_from_scores": 127411,
+    "fewer_alerts": 33336,
+    "reduction_fraction": 0.2073817862852806
+  },
+  "screening_at_threshold_fixed_on_validation": {
+    "flagged": 129766,
+    "labelled": 1089
+  },
+  "manual_review_at_threshold_fixed_on_validation": {
+    "flagged": 31407,
+    "labelled": 925
+  }
+}

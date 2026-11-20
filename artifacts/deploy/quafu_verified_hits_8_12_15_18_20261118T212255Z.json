@@ -35,17 +35,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 3.7999998312443495e-06,
           "energy": -1.7462643142379104,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0002880000101868063,
           "energy": -1.7462643142379104,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0004529999860096723,
           "energy": -1.7462643142379104,
           "hit": true
         }
@@ -219,18 +216,12 @@
           },
           "logical_2q": 8,
           "transpiled_2q": 8,
-          "client_setup_s": 5.538981599995168,
-          "circuit_build_s": 0.4431582000106573,
-          "submit_to_counts_s": 3.0964870000025257,
-          "server_time_s": 0.842941,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 370,
           "optimal_reads": 102,
-          "measured_hit": true,
-          "time_to_response_s": 9.083340799988946,
-          "time_to_verified_s": 9.09395979999681
+          "measured_hit": true
         }
       ],
       "k": 2,
@@ -242,9 +233,6 @@
       "certified": true,
       "optimal_reads": 102,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 9.083340799988946,
-      "time_to_verified_hit_s": 9.09395979999681,
-      "elapsed_s": 9.094794899981935,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -270,17 +258,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 4.599976819008589e-06,
           "energy": -1.1932874552836488,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00035840002237819135,
           "energy": -1.1932874552836488,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0009688000136520714,
           "energy": -1.1932874552836488,
           "hit": true
         }
@@ -749,18 +734,12 @@
           },
           "logical_2q": 12,
           "transpiled_2q": 12,
-          "client_setup_s": 1.170000177808106e-05,
-          "circuit_build_s": 0.0012380999978631735,
-          "submit_to_counts_s": 2.5434871000179555,
-          "server_time_s": 0.864722,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 269,
           "optimal_reads": 35,
-          "measured_hit": true,
-          "time_to_response_s": 2.5553338000026997,
-          "time_to_verified_s": 2.5625924000050873
+          "measured_hit": true
         }
       ],
       "k": 3,
@@ -773,9 +752,6 @@
       "certified": true,
       "optimal_reads": 35,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.5553338000026997,
-      "time_to_verified_hit_s": 2.5625924000050873,
-      "elapsed_s": 2.5635035000159405,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -804,17 +780,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.2000104915350676e-06,
           "energy": -1.1139875929184484,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00035470002330839634,
           "energy": -1.1139875929184484,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0033697999897412956,
           "energy": -1.1139875929184484,
           "hit": true
         }
@@ -1503,18 +1476,12 @@
           },
           "logical_2q": 14,
           "transpiled_2q": 14,
-          "client_setup_s": 6.799993570894003e-06,
-          "circuit_build_s": 0.0013478000182658434,
-          "submit_to_counts_s": 5.242093399981968,
-          "server_time_s": 0.953208,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 238,
           "optimal_reads": 38,
-          "measured_hit": true,
-          "time_to_response_s": 5.268158099992434,
-          "time_to_verified_s": 5.276509799994528
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -1528,9 +1495,6 @@
       "certified": true,
       "optimal_reads": 38,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 5.268158099992434,
-      "time_to_verified_hit_s": 5.276509799994528,
-      "elapsed_s": 5.27761739998823,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -1562,17 +1526,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 1.3699987903237343e-05,
           "energy": -1.6658179588378452,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0007099999929778278,
           "energy": -1.6658179588378452,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0110141999903135,
           "energy": -1.6658179588378452,
           "hit": true
         }
@@ -2362,18 +2323,12 @@
           },
           "logical_2q": 18,
           "transpiled_2q": 18,
-          "client_setup_s": 1.0899995686486363e-05,
-          "circuit_build_s": 0.002778900001430884,
-          "submit_to_counts_s": 3.006884700007504,
-          "server_time_s": 0.999203,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 204,
           "optimal_reads": 32,
-          "measured_hit": true,
-          "time_to_response_s": 3.0285331000050064,
-          "time_to_verified_s": 3.0350686000019778
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -2387,9 +2342,6 @@
       "certified": true,
       "optimal_reads": 32,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 3.0285331000050064,
-      "time_to_verified_hit_s": 3.0350686000019778,
-      "elapsed_s": 3.0363119000103325,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -2411,17 +2363,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 3.6999990697950125e-06,
           "energy": -1.632726461262271,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00030720001086592674,
           "energy": -1.632726461262271,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0004251999780535698,
           "energy": -1.632726461262271,
           "hit": true
         }
@@ -2586,18 +2535,12 @@
           },
           "logical_2q": 8,
           "transpiled_2q": 8,
-          "client_setup_s": 7.399998139590025e-06,
-          "circuit_build_s": 0.0009889999928418547,
-          "submit_to_counts_s": 2.2878442000073846,
-          "server_time_s": 0.803009,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 357,
           "optimal_reads": 215,
-          "measured_hit": true,
-          "time_to_response_s": 2.292247800010955,
-          "time_to_verified_s": 2.299522600020282
+          "measured_hit": true
         }
       ],
       "k": 2,
@@ -2609,9 +2552,6 @@
       "certified": true,
       "optimal_reads": 215,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.292247800010955,
-      "time_to_verified_hit_s": 2.299522600020282,
-      "elapsed_s": 2.3007815000019036,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -2637,17 +2577,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 4.7000066842883825e-06,
           "energy": -1.2135788282440814,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.000302400003420189,
           "energy": -1.2135788282440814,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0008436999924015254,
           "energy": -1.2135788282440814,
           "hit": true
         }
@@ -3086,18 +3023,12 @@
           },
           "logical_2q": 12,
           "transpiled_2q": 12,
-          "client_setup_s": 6.89999433234334e-06,
-          "circuit_build_s": 0.0011033000191673636,
-          "submit_to_counts_s": 2.9741019000066444,
-          "server_time_s": 0.938823,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 279,
           "optimal_reads": 91,
-          "measured_hit": true,
-          "time_to_response_s": 2.9850367000035476,
-          "time_to_verified_s": 2.9874823999998625
+          "measured_hit": true
         }
       ],
       "k": 3,
@@ -3110,9 +3041,6 @@
       "certified": true,
       "optimal_reads": 91,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.9850367000035476,
-      "time_to_verified_hit_s": 2.9874823999998625,
-      "elapsed_s": 2.9888453999883495,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -3141,17 +3069,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.2000104915350676e-06,
           "energy": -2.4521620806640847,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0003463999892119318,
           "energy": -2.4521620806640847,
           "hit": true
         },
         "exact": {
-          "seconds": 0.003277899988461286,
           "energy": -2.4521620806640847,
           "hit": true
         }
@@ -3825,18 +3750,12 @@
           },
           "logical_2q": 14,
           "transpiled_2q": 14,
-          "client_setup_s": 7.399998139590025e-06,
-          "circuit_build_s": 0.0012886999757029116,
-          "submit_to_counts_s": 6.4009239000151865,
-          "server_time_s": 0.921957,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 241,
           "optimal_reads": 34,
-          "measured_hit": true,
-          "time_to_response_s": 6.4176955000148155,
-          "time_to_verified_s": 6.4236094999942
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -3850,9 +3769,6 @@
       "certified": true,
       "optimal_reads": 34,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 6.4176955000148155,
-      "time_to_verified_hit_s": 6.4236094999942,
-      "elapsed_s": 6.425092499994207,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -3884,17 +3800,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 6.199989002197981e-06,
           "energy": -2.205580450301138,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00043909999658353627,
           "energy": -2.205580450301138,
           "hit": true
         },
         "exact": {
-          "seconds": 0.007749299984425306,
           "energy": -2.205580450301138,
           "hit": true
         }
@@ -4697,18 +4610,12 @@
           },
           "logical_2q": 18,
           "transpiled_2q": 18,
-          "client_setup_s": 6.89999433234334e-06,
-          "circuit_build_s": 0.0015787000011187047,
-          "submit_to_counts_s": 2.9979515000013635,
-          "server_time_s": 0.935213,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 198,
           "optimal_reads": 37,
-          "measured_hit": true,
-          "time_to_response_s": 3.019677000003867,
-          "time_to_verified_s": 3.0264644999988377
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -4722,9 +4629,6 @@
       "certified": true,
       "optimal_reads": 37,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 3.019677000003867,
-      "time_to_verified_hit_s": 3.0264644999988377,
-      "elapsed_s": 3.0284346000116784,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -4746,17 +4650,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 4.3000036384910345e-06,
           "energy": -1.0899171189166976,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0003000000142492354,
           "energy": -1.0899171189166976,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0004937000048812479,
           "energy": -1.0899171189166976,
           "hit": true
         }
@@ -4908,18 +4809,12 @@
           },
           "logical_2q": 8,
           "transpiled_2q": 8,
-          "client_setup_s": 1.0399991879239678e-05,
-          "circuit_build_s": 0.0011636999843176454,
-          "submit_to_counts_s": 2.3254500000039116,
-          "server_time_s": 0.837516,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 372,
           "optimal_reads": 234,
-          "measured_hit": true,
-          "time_to_response_s": 2.329980800015619,
-          "time_to_verified_s": 2.3328210999898147
+          "measured_hit": true
         }
       ],
       "k": 2,
@@ -4931,9 +4826,6 @@
       "certified": true,
       "optimal_reads": 234,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.329980800015619,
-      "time_to_verified_hit_s": 2.3328210999898147,
-      "elapsed_s": 2.3354619999881834,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -4959,17 +4851,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.1000097300857306e-06,
           "energy": -2.0831193088497333,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00034359999699518085,
           "energy": -2.0831193088497333,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0010030000121332705,
           "energy": -2.0831193088497333,
           "hit": true
         }
@@ -5369,18 +5258,12 @@
           },
           "logical_2q": 12,
           "transpiled_2q": 12,
-          "client_setup_s": 1.1099997209385037e-05,
-          "circuit_build_s": 0.0016294000088237226,
-          "submit_to_counts_s": 2.985589299991261,
-          "server_time_s": 0.883381,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 281,
           "optimal_reads": 108,
-          "measured_hit": true,
-          "time_to_response_s": 2.9964923999796156,
-          "time_to_verified_s": 2.9986797999881674
+          "measured_hit": true
         }
       ],
       "k": 3,
@@ -5393,9 +5276,6 @@
       "certified": true,
       "optimal_reads": 108,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.9964923999796156,
-      "time_to_verified_hit_s": 2.9986797999881674,
-      "elapsed_s": 3.000432200002251,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -5424,17 +5304,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.2000104915350676e-06,
           "energy": -1.298994677065771,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0003653000167105347,
           "energy": -1.298994677065771,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0033170999959111214,
           "energy": -1.298994677065771,
           "hit": true
         }
@@ -6173,18 +6050,12 @@
           },
           "logical_2q": 14,
           "transpiled_2q": 14,
-          "client_setup_s": 7.099995855242014e-06,
-          "circuit_build_s": 0.001299199997447431,
-          "submit_to_counts_s": 2.310531399998581,
-          "server_time_s": 0.986623,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 226,
           "optimal_reads": 19,
-          "measured_hit": true,
-          "time_to_response_s": 2.329454299993813,
-          "time_to_verified_s": 2.335948099993402
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -6198,9 +6069,6 @@
       "certified": true,
       "optimal_reads": 19,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.329454299993813,
-      "time_to_verified_hit_s": 2.335948099993402,
-      "elapsed_s": 2.338117399980547,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -6232,17 +6100,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 7.199996616691351e-06,
           "energy": -1.8620008958632965,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0005502999993041158,
           "energy": -1.8620008958632965,
           "hit": true
         },
         "exact": {
-          "seconds": 0.00797840001177974,
           "energy": -1.8620008958632965,
           "hit": true
         }
@@ -7100,18 +6965,12 @@
           },
           "logical_2q": 18,
           "transpiled_2q": 18,
-          "client_setup_s": 1.6099977074190974e-05,
-          "circuit_build_s": 0.0018930000078398734,
-          "submit_to_counts_s": 2.3269097000011243,
-          "server_time_s": 1.019537,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 156,
           "optimal_reads": 18,
-          "measured_hit": true,
-          "time_to_response_s": 2.348900799988769,
-          "time_to_verified_s": 2.354968600004213
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -7125,9 +6984,6 @@
       "certified": true,
       "optimal_reads": 18,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.348900799988769,
-      "time_to_verified_hit_s": 2.354968600004213,
-      "elapsed_s": 2.357023399992613,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -7149,17 +7005,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 4.0000013541430235e-06,
           "energy": -1.1367134621357904,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0002820999943651259,
           "energy": -1.1367134621357904,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0004326000052969903,
           "energy": -1.1367134621357904,
           "hit": true
         }
@@ -7323,18 +7176,12 @@
           },
           "logical_2q": 8,
           "transpiled_2q": 8,
-          "client_setup_s": 5.999987479299307e-06,
-          "circuit_build_s": 0.0008695000142324716,
-          "submit_to_counts_s": 2.28719919998548,
-          "server_time_s": 0.820549,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 364,
           "optimal_reads": 235,
-          "measured_hit": true,
-          "time_to_response_s": 2.291712500009453,
-          "time_to_verified_s": 2.298928200005321
+          "measured_hit": true
         }
       ],
       "k": 2,
@@ -7346,9 +7193,6 @@
       "certified": true,
       "optimal_reads": 235,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.291712500009453,
-      "time_to_verified_hit_s": 2.298928200005321,
-      "elapsed_s": 2.3011126999917906,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -7374,17 +7218,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 4.3000036384910345e-06,
           "energy": -2.416451425544526,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0002826999989338219,
           "energy": -2.416451425544526,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0008318000182043761,
           "energy": -2.416451425544526,
           "hit": true
         }
@@ -7791,18 +7632,12 @@
           },
           "logical_2q": 12,
           "transpiled_2q": 12,
-          "client_setup_s": 6.699992809444666e-06,
-          "circuit_build_s": 0.0010840999893844128,
-          "submit_to_counts_s": 2.2997793999966234,
-          "server_time_s": 0.867577,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 278,
           "optimal_reads": 117,
-          "measured_hit": true,
-          "time_to_response_s": 2.3097782999975607,
-          "time_to_verified_s": 2.3122302000119817
+          "measured_hit": true
         }
       ],
       "k": 3,
@@ -7815,9 +7650,6 @@
       "certified": true,
       "optimal_reads": 117,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.3097782999975607,
-      "time_to_verified_hit_s": 2.3122302000119817,
-      "elapsed_s": 2.3145674999977928,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -7846,17 +7678,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.1000097300857306e-06,
           "energy": -2.5633271531775925,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.000325599976349622,
           "energy": -2.5633271531775925,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0033250999986194074,
           "energy": -2.5633271531775925,
           "hit": true
         }
@@ -8595,18 +8424,12 @@
           },
           "logical_2q": 14,
           "transpiled_2q": 14,
-          "client_setup_s": 6.200018106028438e-06,
-          "circuit_build_s": 0.001288400002522394,
-          "submit_to_counts_s": 3.9818105999729596,
-          "server_time_s": 0.984693,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 188,
           "optimal_reads": 22,
-          "measured_hit": true,
-          "time_to_response_s": 4.000586999987718,
-          "time_to_verified_s": 4.006896800012328
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -8620,9 +8443,6 @@
       "certified": true,
       "optimal_reads": 22,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 4.000586999987718,
-      "time_to_verified_hit_s": 4.006896800012328,
-      "elapsed_s": 4.009521200001473,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -8654,17 +8474,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.5000127758830786e-06,
           "energy": -2.993506991690346,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00044170001638121903,
           "energy": -2.993506991690346,
           "hit": true
         },
         "exact": {
-          "seconds": 0.007760999986203387,
           "energy": -2.993506991690346,
           "hit": true
         }
@@ -9486,18 +9303,12 @@
           },
           "logical_2q": 18,
           "transpiled_2q": 18,
-          "client_setup_s": 7.800001185387373e-06,
-          "circuit_build_s": 0.001601299998583272,
-          "submit_to_counts_s": 2.318020599981537,
-          "server_time_s": 0.999879,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 171,
           "optimal_reads": 28,
-          "measured_hit": true,
-          "time_to_response_s": 2.338786500011338,
-          "time_to_verified_s": 2.342261799989501
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -9511,9 +9322,6 @@
       "certified": true,
       "optimal_reads": 28,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.338786500011338,
-      "time_to_verified_hit_s": 2.342261799989501,
-      "elapsed_s": 2.344946400000481,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -9535,17 +9343,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 3.3999967854470015e-06,
           "energy": -1.7794670459664967,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0002465000143274665,
           "energy": -1.7794670459664967,
           "hit": true
         },
         "exact": {
-          "seconds": 0.00040359998820349574,
           "energy": -1.7794670459664967,
           "hit": true
         }
@@ -9690,18 +9495,12 @@
           },
           "logical_2q": 8,
           "transpiled_2q": 8,
-          "client_setup_s": 6.499991286545992e-06,
-          "circuit_build_s": 0.0009358999959658831,
-          "submit_to_counts_s": 3.2974869000026956,
-          "server_time_s": 0.801646,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 378,
           "optimal_reads": 276,
-          "measured_hit": true,
-          "time_to_response_s": 3.301353399991058,
-          "time_to_verified_s": 3.308202699990943
+          "measured_hit": true
         }
       ],
       "k": 2,
@@ -9713,9 +9512,6 @@
       "certified": true,
       "optimal_reads": 276,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 3.301353399991058,
-      "time_to_verified_hit_s": 3.308202699990943,
-      "elapsed_s": 3.3109633999993093,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -9741,17 +9537,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 4.5000051613897085e-06,
           "energy": -2.3682687992209903,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0003108000091742724,
           "energy": -2.3682687992209903,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0008486999722663313,
           "energy": -2.3682687992209903,
           "hit": true
         }
@@ -10175,18 +9968,12 @@
           },
           "logical_2q": 12,
           "transpiled_2q": 12,
-          "client_setup_s": 6.600021151825786e-06,
-          "circuit_build_s": 0.0011057999799959362,
-          "submit_to_counts_s": 2.3003808000066783,
-          "server_time_s": 0.896688,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 248,
           "optimal_reads": 99,
-          "measured_hit": true,
-          "time_to_response_s": 2.3114664000167977,
-          "time_to_verified_s": 2.318591000017477
+          "measured_hit": true
         }
       ],
       "k": 3,
@@ -10199,9 +9986,6 @@
       "certified": true,
       "optimal_reads": 99,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.3114664000167977,
-      "time_to_verified_hit_s": 2.318591000017477,
-      "elapsed_s": 2.3213925000163727,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -10230,17 +10014,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.5000127758830786e-06,
           "energy": -2.3858538293074254,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00039319999632425606,
           "energy": -2.3858538293074254,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0035134999779984355,
           "energy": -2.3858538293074254,
           "hit": true
         }
@@ -11007,18 +10788,12 @@
           },
           "logical_2q": 14,
           "transpiled_2q": 14,
-          "client_setup_s": 7.599999662488699e-06,
-          "circuit_build_s": 0.00134680001065135,
-          "submit_to_counts_s": 2.3189735999912955,
-          "server_time_s": 1.011188,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 166,
           "optimal_reads": 13,
-          "measured_hit": true,
-          "time_to_response_s": 2.338287099992158,
-          "time_to_verified_s": 2.3444638999935705
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -11032,9 +10807,6 @@
       "certified": true,
       "optimal_reads": 13,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.338287099992158,
-      "time_to_verified_hit_s": 2.3444638999935705,
-      "elapsed_s": 2.3476859999937005,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -11066,17 +10838,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.900015821680427e-06,
           "energy": -1.7352464111241304,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0004412999842315912,
           "energy": -1.7352464111241304,
           "hit": true
         },
         "exact": {
-          "seconds": 0.007707400014624,
           "energy": -1.7352464111241304,
           "hit": true
         }
@@ -11907,18 +11676,12 @@
           },
           "logical_2q": 18,
           "transpiled_2q": 18,
-          "client_setup_s": 0.503780300001381,
-          "circuit_build_s": 0.0016478000034112483,
-          "submit_to_counts_s": 2.302135799982352,
-          "server_time_s": 0.959191,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 164,
           "optimal_reads": 17,
-          "measured_hit": true,
-          "time_to_response_s": 2.8269078000157606,
-          "time_to_verified_s": 2.8300924000213854
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -11932,9 +11695,6 @@
       "certified": true,
       "optimal_reads": 17,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.8269078000157606,
-      "time_to_verified_hit_s": 2.8300924000213854,
-      "elapsed_s": 2.833112100022845,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -11956,17 +11716,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 3.6999990697950125e-06,
           "energy": -1.2519865418800409,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00030980000155977905,
           "energy": -1.2519865418800409,
           "hit": true
         },
         "exact": {
-          "seconds": 0.00046919999294914305,
           "energy": -1.2519865418800409,
           "hit": true
         }
@@ -12134,18 +11891,12 @@
           },
           "logical_2q": 8,
           "transpiled_2q": 8,
-          "client_setup_s": 5.3000112529844046e-06,
-          "circuit_build_s": 0.0008442999969702214,
-          "submit_to_counts_s": 2.2894078999815974,
-          "server_time_s": 0.795122,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 373,
           "optimal_reads": 215,
-          "measured_hit": true,
-          "time_to_response_s": 2.2940769999986514,
-          "time_to_verified_s": 2.3017641000042204
+          "measured_hit": true
         }
       ],
       "k": 2,
@@ -12157,9 +11908,6 @@
       "certified": true,
       "optimal_reads": 215,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.2940769999986514,
-      "time_to_verified_hit_s": 2.3017641000042204,
-      "elapsed_s": 2.304825200000778,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -12185,17 +11933,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 4.3000036384910345e-06,
           "energy": -2.0480502796115125,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00029269998776726425,
           "energy": -2.0480502796115125,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0008305000083055347,
           "energy": -2.0480502796115125,
           "hit": true
         }
@@ -12584,18 +12329,12 @@
           },
           "logical_2q": 12,
           "transpiled_2q": 12,
-          "client_setup_s": 6.400019628927112e-06,
-          "circuit_build_s": 0.001108399999793619,
-          "submit_to_counts_s": 2.29747839999618,
-          "server_time_s": 0.893835,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 283,
           "optimal_reads": 117,
-          "measured_hit": true,
-          "time_to_response_s": 2.307002999994438,
-          "time_to_verified_s": 2.313681799976621
+          "measured_hit": true
         }
       ],
       "k": 3,
@@ -12608,9 +12347,6 @@
       "certified": true,
       "optimal_reads": 117,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.307002999994438,
-      "time_to_verified_hit_s": 2.313681799976621,
-      "elapsed_s": 2.3169143999984954,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -12639,17 +12375,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.0000089686363935e-06,
           "energy": -2.4403709072620146,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.000350900023477152,
           "energy": -2.4403709072620146,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0033297000045422465,
           "energy": -2.4403709072620146,
           "hit": true
         }
@@ -13327,18 +13060,12 @@
           },
           "logical_2q": 14,
           "transpiled_2q": 14,
-          "client_setup_s": 6.89999433234334e-06,
-          "circuit_build_s": 0.0013161000097170472,
-          "submit_to_counts_s": 5.500491799990414,
-          "server_time_s": 0.958116,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 232,
           "optimal_reads": 37,
-          "measured_hit": true,
-          "time_to_response_s": 5.51733349999995,
-          "time_to_verified_s": 5.5234916000044905
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -13352,9 +13079,6 @@
       "certified": true,
       "optimal_reads": 37,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 5.51733349999995,
-      "time_to_verified_hit_s": 5.5234916000044905,
-      "elapsed_s": 5.527244900004007,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -13386,17 +13110,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.89998671784997e-06,
           "energy": -1.2323433017617873,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0004976999771315604,
           "energy": -1.2323433017617873,
           "hit": true
         },
         "exact": {
-          "seconds": 0.007669399987207726,
           "energy": -1.2323433017617873,
           "hit": true
         }
@@ -14178,18 +13899,12 @@
           },
           "logical_2q": 18,
           "transpiled_2q": 18,
-          "client_setup_s": 7.399998139590025e-06,
-          "circuit_build_s": 0.0015646999818272889,
-          "submit_to_counts_s": 2.759220500010997,
-          "server_time_s": 0.937744,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 200,
           "optimal_reads": 25,
-          "measured_hit": true,
-          "time_to_response_s": 2.7792671999777667,
-          "time_to_verified_s": 2.785512699978426
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -14203,9 +13918,6 @@
       "certified": true,
       "optimal_reads": 25,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.7792671999777667,
-      "time_to_verified_hit_s": 2.785512699978426,
-      "elapsed_s": 2.7890839999890886,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -14227,17 +13939,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 3.5999983083456755e-06,
           "energy": -1.1255299649348869,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00024289998691529036,
           "energy": -1.1255299649348869,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0004056000034324825,
           "energy": -1.1255299649348869,
           "hit": true
         }
@@ -14399,18 +14108,12 @@
           },
           "logical_2q": 8,
           "transpiled_2q": 8,
-          "client_setup_s": 6.499991286545992e-06,
-          "circuit_build_s": 0.0008457000076305121,
-          "submit_to_counts_s": 4.024059099989245,
-          "server_time_s": 0.863811,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 341,
           "optimal_reads": 235,
-          "measured_hit": true,
-          "time_to_response_s": 4.02832079998916,
-          "time_to_verified_s": 4.035229900007835
+          "measured_hit": true
         }
       ],
       "k": 2,
@@ -14422,9 +14125,6 @@
       "certified": true,
       "optimal_reads": 235,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 4.02832079998916,
-      "time_to_verified_hit_s": 4.035229900007835,
-      "elapsed_s": 4.038649099995382,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -14450,17 +14150,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.499983672052622e-06,
           "energy": -1.0610290538918399,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.000464599987026304,
           "energy": -1.0610290538918399,
           "hit": true
         },
         "exact": {
-          "seconds": 0.000964400009252131,
           "energy": -1.0610290538918399,
           "hit": true
         }
@@ -14849,18 +14546,12 @@
           },
           "logical_2q": 12,
           "transpiled_2q": 12,
-          "client_setup_s": 7.099995855242014e-06,
-          "circuit_build_s": 0.0011033999908249825,
-          "submit_to_counts_s": 8.036124600010226,
-          "server_time_s": 0.957621,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 263,
           "optimal_reads": 108,
-          "measured_hit": true,
-          "time_to_response_s": 8.046650200005388,
-          "time_to_verified_s": 8.054562000004807
+          "measured_hit": true
         }
       ],
       "k": 3,
@@ -14873,9 +14564,6 @@
       "certified": true,
       "optimal_reads": 108,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 8.046650200005388,
-      "time_to_verified_hit_s": 8.054562000004807,
-      "elapsed_s": 8.058307300001616,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -14904,17 +14592,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 6.999995093792677e-06,
           "energy": -2.2394009979223384,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0005030999891459942,
           "energy": -2.2394009979223384,
           "hit": true
         },
         "exact": {
-          "seconds": 0.00374700000975281,
           "energy": -2.2394009979223384,
           "hit": true
         }
@@ -15633,18 +15318,12 @@
           },
           "logical_2q": 14,
           "transpiled_2q": 14,
-          "client_setup_s": 8.600007276982069e-06,
-          "circuit_build_s": 0.001498800003901124,
-          "submit_to_counts_s": 4.4013697000045795,
-          "server_time_s": 0.966876,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 186,
           "optimal_reads": 16,
-          "measured_hit": true,
-          "time_to_response_s": 4.419522099982714,
-          "time_to_verified_s": 4.425731299998006
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -15658,9 +15337,6 @@
       "certified": true,
       "optimal_reads": 16,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 4.419522099982714,
-      "time_to_verified_hit_s": 4.425731299998006,
-      "elapsed_s": 4.42930669998168,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -15692,17 +15368,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 6.200018106028438e-06,
           "energy": -1.9584796891151548,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0004579000233206898,
           "energy": -1.9584796891151548,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0078028999851085246,
           "energy": -1.9584796891151548,
           "hit": true
         }
@@ -16501,18 +16174,12 @@
           },
           "logical_2q": 18,
           "transpiled_2q": 18,
-          "client_setup_s": 7.800001185387373e-06,
-          "circuit_build_s": 0.0015888999914750457,
-          "submit_to_counts_s": 4.1221692000108305,
-          "server_time_s": 1.014307,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 218,
           "optimal_reads": 42,
-          "measured_hit": true,
-          "time_to_response_s": 4.142370099987602,
-          "time_to_verified_s": 4.1484722000022884
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -16526,9 +16193,6 @@
       "certified": true,
       "optimal_reads": 42,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 4.142370099987602,
-      "time_to_verified_hit_s": 4.1484722000022884,
-      "elapsed_s": 4.1521843999798875,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -16550,17 +16214,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 3.6999990697950125e-06,
           "energy": -1.466635138249691,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00027129999944008887,
           "energy": -1.466635138249691,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0004230000195093453,
           "energy": -1.466635138249691,
           "hit": true
         }
@@ -16722,18 +16383,12 @@
           },
           "logical_2q": 8,
           "transpiled_2q": 8,
-          "client_setup_s": 7.099995855242014e-06,
-          "circuit_build_s": 0.0008538000111002475,
-          "submit_to_counts_s": 3.7540559000044595,
-          "server_time_s": 0.830934,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 360,
           "optimal_reads": 233,
-          "measured_hit": true,
-          "time_to_response_s": 3.758250999992015,
-          "time_to_verified_s": 3.7655779999913648
+          "measured_hit": true
         }
       ],
       "k": 2,
@@ -16745,9 +16400,6 @@
       "certified": true,
       "optimal_reads": 233,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 3.758250999992015,
-      "time_to_verified_hit_s": 3.7655779999913648,
-      "elapsed_s": 3.7693271999887656,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -16773,17 +16425,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 4.2000028770416975e-06,
           "energy": -2.4288133343811875,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0003110000106971711,
           "energy": -2.4288133343811875,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0008516999951098114,
           "energy": -2.4288133343811875,
           "hit": true
         }
@@ -17171,18 +16820,12 @@
           },
           "logical_2q": 12,
           "transpiled_2q": 12,
-          "client_setup_s": 6.399990525096655e-06,
-          "circuit_build_s": 0.0011144999880343676,
-          "submit_to_counts_s": 4.036014600016642,
-          "server_time_s": 0.955954,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 261,
           "optimal_reads": 128,
-          "measured_hit": true,
-          "time_to_response_s": 4.046238999988418,
-          "time_to_verified_s": 4.0511743999959435
+          "measured_hit": true
         }
       ],
       "k": 3,
@@ -17195,9 +16838,6 @@
       "certified": true,
       "optimal_reads": 128,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 4.046238999988418,
-      "time_to_verified_hit_s": 4.0511743999959435,
-      "elapsed_s": 4.055106099986006,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -17226,17 +16866,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.799985956400633e-06,
           "energy": -1.7976320501556131,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.000361400016117841,
           "energy": -1.7976320501556131,
           "hit": true
         },
         "exact": {
-          "seconds": 0.003534199990099296,
           "energy": -1.7976320501556131,
           "hit": true
         }
@@ -17937,18 +17574,12 @@
           },
           "logical_2q": 14,
           "transpiled_2q": 14,
-          "client_setup_s": 7.499998901039362e-06,
-          "circuit_build_s": 0.001305999991018325,
-          "submit_to_counts_s": 3.535075699997833,
-          "server_time_s": 0.926387,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 179,
           "optimal_reads": 20,
-          "measured_hit": true,
-          "time_to_response_s": 3.552395600010641,
-          "time_to_verified_s": 3.5581712999846786
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -17962,9 +17593,6 @@
       "certified": true,
       "optimal_reads": 20,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 3.552395600010641,
-      "time_to_verified_hit_s": 3.5581712999846786,
-      "elapsed_s": 3.5624561999866273,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -17996,17 +17624,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.5000127758830786e-06,
           "energy": -2.6188366113541477,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.000533799990080297,
           "energy": -2.6188366113541477,
           "hit": true
         },
         "exact": {
-          "seconds": 0.007502499996917322,
           "energy": -2.6188366113541477,
           "hit": true
         }
@@ -18813,18 +18438,12 @@
           },
           "logical_2q": 18,
           "transpiled_2q": 18,
-          "client_setup_s": 1.7299986211583018e-05,
-          "circuit_build_s": 0.0015524000045843422,
-          "submit_to_counts_s": 2.801096499984851,
-          "server_time_s": 0.971467,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 159,
           "optimal_reads": 22,
-          "measured_hit": true,
-          "time_to_response_s": 2.822374499985017,
-          "time_to_verified_s": 2.828344899986405
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -18838,9 +18457,6 @@
       "certified": true,
       "optimal_reads": 22,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.822374499985017,
-      "time_to_verified_hit_s": 2.828344899986405,
-      "elapsed_s": 2.833680799987633,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -18862,17 +18478,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 3.5999983083456755e-06,
           "energy": -1.4795699647353118,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00025279997498728335,
           "energy": -1.4795699647353118,
           "hit": true
         },
         "exact": {
-          "seconds": 0.00041939999209716916,
           "energy": -1.4795699647353118,
           "hit": true
         }
@@ -19020,18 +18633,12 @@
           },
           "logical_2q": 8,
           "transpiled_2q": 8,
-          "client_setup_s": 6.200018106028438e-06,
-          "circuit_build_s": 0.0008557999972254038,
-          "submit_to_counts_s": 2.907989799976349,
-          "server_time_s": 0.828551,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 380,
           "optimal_reads": 253,
-          "measured_hit": true,
-          "time_to_response_s": 2.911894699995173,
-          "time_to_verified_s": 2.919039900007192
+          "measured_hit": true
         }
       ],
       "k": 2,
@@ -19043,9 +18650,6 @@
       "certified": true,
       "optimal_reads": 253,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.911894699995173,
-      "time_to_verified_hit_s": 2.919039900007192,
-      "elapsed_s": 2.9233301999920513,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -19071,17 +18675,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 4.499976057559252e-06,
           "energy": -1.1766128397697706,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00036600002204068005,
           "energy": -1.1766128397697706,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0009156000160146505,
           "energy": -1.1766128397697706,
           "hit": true
         }
@@ -19465,18 +19066,12 @@
           },
           "logical_2q": 12,
           "transpiled_2q": 12,
-          "client_setup_s": 5.799985956400633e-06,
-          "circuit_build_s": 0.0010906000097747892,
-          "submit_to_counts_s": 3.5403743000060786,
-          "server_time_s": 0.907959,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 283,
           "optimal_reads": 114,
-          "measured_hit": true,
-          "time_to_response_s": 3.550462899991544,
-          "time_to_verified_s": 3.5586811999964993
+          "measured_hit": true
         }
       ],
       "k": 3,
@@ -19489,9 +19084,6 @@
       "certified": true,
       "optimal_reads": 114,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 3.550462899991544,
-      "time_to_verified_hit_s": 3.5586811999964993,
-      "elapsed_s": 3.563277199980803,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -19520,17 +19112,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 7.299997378140688e-06,
           "energy": -2.7505838292698144,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00042290001874789596,
           "energy": -2.7505838292698144,
           "hit": true
         },
         "exact": {
-          "seconds": 0.003595999995013699,
           "energy": -2.7505838292698144,
           "hit": true
         }
@@ -20237,18 +19826,12 @@
           },
           "logical_2q": 14,
           "transpiled_2q": 14,
-          "client_setup_s": 8.300004992634058e-06,
-          "circuit_build_s": 0.001362299983156845,
-          "submit_to_counts_s": 3.1317738000070676,
-          "server_time_s": 0.957591,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 162,
           "optimal_reads": 17,
-          "measured_hit": true,
-          "time_to_response_s": 3.1495251999876928,
-          "time_to_verified_s": 3.1558363999938592
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -20262,9 +19845,6 @@
       "certified": true,
       "optimal_reads": 17,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 3.1495251999876928,
-      "time_to_verified_hit_s": 3.1558363999938592,
-      "elapsed_s": 3.1603973000019323,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -20296,17 +19876,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 7.099995855242014e-06,
           "energy": -3.0644674028551435,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0005426999996416271,
           "energy": -3.0644674028551435,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0075409999990370125,
           "energy": -3.0644674028551435,
           "hit": true
         }
@@ -21097,18 +20674,12 @@
           },
           "logical_2q": 18,
           "transpiled_2q": 18,
-          "client_setup_s": 0.5007746999908704,
-          "circuit_build_s": 0.0016168000001925975,
-          "submit_to_counts_s": 3.0566934999951627,
-          "server_time_s": 0.962267,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 199,
           "optimal_reads": 35,
-          "measured_hit": true,
-          "time_to_response_s": 3.579130600002827,
-          "time_to_verified_s": 3.5857482999854255
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -21122,9 +20693,6 @@
       "certified": true,
       "optimal_reads": 35,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 3.579130600002827,
-      "time_to_verified_hit_s": 3.5857482999854255,
-      "elapsed_s": 3.590432500001043,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -21146,17 +20714,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 3.9000005926936865e-06,
           "energy": -1.3239215494703664,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.000311399984639138,
           "energy": -1.3239215494703664,
           "hit": true
         },
         "exact": {
-          "seconds": 0.00045300001511350274,
           "energy": -1.3239215494703664,
           "hit": true
         }
@@ -21308,18 +20873,12 @@
           },
           "logical_2q": 8,
           "transpiled_2q": 8,
-          "client_setup_s": 6.89999433234334e-06,
-          "circuit_build_s": 0.0008687000081408769,
-          "submit_to_counts_s": 2.289802899991628,
-          "server_time_s": 0.822479,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 371,
           "optimal_reads": 236,
-          "measured_hit": true,
-          "time_to_response_s": 2.2938599000044633,
-          "time_to_verified_s": 2.3015518999891356
+          "measured_hit": true
         }
       ],
       "k": 2,
@@ -21331,9 +20890,6 @@
       "certified": true,
       "optimal_reads": 236,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.2938599000044633,
-      "time_to_verified_hit_s": 2.3015518999891356,
-      "elapsed_s": 2.3065823999932036,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -21359,17 +20915,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 4.7000066842883825e-06,
           "energy": -1.0700671057891977,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00031400000443682075,
           "energy": -1.0700671057891977,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0008407999994233251,
           "energy": -1.0700671057891977,
           "hit": true
         }
@@ -21791,18 +21344,12 @@
           },
           "logical_2q": 12,
           "transpiled_2q": 12,
-          "client_setup_s": 6.599992047995329e-06,
-          "circuit_build_s": 0.001113900012569502,
-          "submit_to_counts_s": 6.392421099997591,
-          "server_time_s": 0.936858,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 253,
           "optimal_reads": 103,
-          "measured_hit": true,
-          "time_to_response_s": 6.403208600007929,
-          "time_to_verified_s": 6.410083900002064
+          "measured_hit": true
         }
       ],
       "k": 3,
@@ -21815,9 +21362,6 @@
       "certified": true,
       "optimal_reads": 103,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 6.403208600007929,
-      "time_to_verified_hit_s": 6.410083900002064,
-      "elapsed_s": 6.415149700012989,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -21846,17 +21390,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 5.699985194951296e-06,
           "energy": -2.910492833158436,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.00035960000241175294,
           "energy": -2.910492833158436,
           "hit": true
         },
         "exact": {
-          "seconds": 0.0035715000121854246,
           "energy": -2.910492833158436,
           "hit": true
         }
@@ -22571,18 +22112,12 @@
           },
           "logical_2q": 14,
           "transpiled_2q": 14,
-          "client_setup_s": 8.499977411702275e-06,
-          "circuit_build_s": 0.0015718000067863613,
-          "submit_to_counts_s": 2.9835776000109036,
-          "server_time_s": 0.998039,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 172,
           "optimal_reads": 19,
-          "measured_hit": true,
-          "time_to_response_s": 3.0021485000033863,
-          "time_to_verified_s": 3.008383499982301
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -22596,9 +22131,6 @@
       "certified": true,
       "optimal_reads": 19,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 3.0021485000033863,
-      "time_to_verified_hit_s": 3.008383499982301,
-      "elapsed_s": 3.013780899986159,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,
@@ -22630,17 +22162,14 @@
       "status": "hit",
       "cpu": {
         "top_k": {
-          "seconds": 6.300018867477775e-06,
           "energy": -1.6304797903339043,
           "hit": true
         },
         "top_k_swap": {
-          "seconds": 0.0004130000015720725,
           "energy": -1.6304797903339043,
           "hit": true
         },
         "exact": {
-          "seconds": 0.007718300010310486,
           "energy": -1.6304797903339043,
           "hit": true
         }
@@ -23424,18 +22953,12 @@
           },
           "logical_2q": 18,
           "transpiled_2q": 18,
-          "client_setup_s": 7.199996616691351e-06,
-          "circuit_build_s": 0.0015660999924875796,
-          "submit_to_counts_s": 2.317472800001269,
-          "server_time_s": 0.936021,
           "variant": "local",
           "attempt_index": 0,
           "measured_reads": 1024,
           "feasible_reads": 202,
           "optimal_reads": 31,
-          "measured_hit": true,
-          "time_to_response_s": 2.3377454000001308,
-          "time_to_verified_s": 2.340682600013679
+          "measured_hit": true
         }
       ],
       "k": 4,
@@ -23449,9 +22972,6 @@
       "certified": true,
       "optimal_reads": 31,
       "measured_reads": 1024,
-      "time_to_first_hit_s": 2.3377454000001308,
-      "time_to_verified_hit_s": 2.340682600013679,
-      "elapsed_s": 2.3458894999930635,
       "gamma": 1.5707963267948966,
       "beta": 0.18849555921538758,
       "leader_bias": null,

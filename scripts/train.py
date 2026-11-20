@@ -31,7 +31,17 @@ def main() -> None:
     parser.add_argument("--review-rate", type=float, default=.02, help="manual review fraction on validation")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dataset-name", default="paysim", help="label stored in the metrics")
+    parser.add_argument("--tgnn-epochs", type=int, default=0, help="positive to train the TGNN graph signal")
+    parser.add_argument("--tgnn-min-weight", type=float, default=0.0, help="minimum TGNN fusion weight for a controlled pilot")
     args = parser.parse_args()
+    if args.tgnn_epochs < 0:
+        parser.error("--tgnn-epochs must be nonnegative")
+    if not 0 <= args.tgnn_min_weight <= .95 or (args.tgnn_min_weight and not args.tgnn_epochs):
+        parser.error("--tgnn-min-weight must be 0–0.95 and requires TGNN training when positive")
+    if args.tgnn_epochs:
+        import torch
+
+        torch.set_num_threads(1)
 
     scorer, metrics = train_and_evaluate(
         pd.read_csv(args.data),
@@ -39,6 +49,8 @@ def main() -> None:
         review_rate=args.review_rate,
         random_state=args.seed,
         dataset_name=args.dataset_name,
+        temporal_graph_epochs=args.tgnn_epochs,
+        min_tgnn_weight=args.tgnn_min_weight,
     )
     scorer.save(args.output)
     metrics_path = args.metrics or args.output.with_name(

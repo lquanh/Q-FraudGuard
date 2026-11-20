@@ -1,0 +1,8 @@
+SPDX-FileCopyrightText: Edgar López-Rojas (PaySim dataset publisher)
+SPDX-License-Identifier: CC-BY-SA-4.0
+
+Source: Synthetic Financial Datasets For Fraud Detection (PaySim)
+https://www.kaggle.com/datasets/ealaxi/paysim1
+Changes: Q-FraudGuard selected a sample of 99,416 transactions.
+License: https://creativecommons.org/licenses/by-sa/4.0/legalcode.en
+Offline copy: licenses/CC-BY-SA-4.0.txt

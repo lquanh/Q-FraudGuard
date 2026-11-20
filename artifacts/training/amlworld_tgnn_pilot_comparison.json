@@ -1,0 +1,33 @@
+{
+  "split_rows": [
+    248887,
+    82962,
+    82963
+  ],
+  "test_laundering": 168,
+  "top_budget": 12445,
+  "unconstrained_weights": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "pilot_weights": [
+    0.95,
+    0.0,
+    0.05,
+    0.0
+  ],
+  "min_tgnn_weight": 0.05,
+  "unconstrained": {
+    "average_precision": 0.40458824420348677,
+    "frauds_in_top_15_percent": 157
+  },
+  "pilot": {
+    "average_precision": 0.416633428419083,
+    "frauds_in_top_15_percent": 157
+  },
+  "pilot_operational_alerts": 12989,
+  "pilot_operational_detected": 157,
+  "score_batch_seconds": 43.195
+}

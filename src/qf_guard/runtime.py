@@ -8,6 +8,7 @@ import pandas as pd
 from qf_guard.data import normalize_transactions
 from qf_guard.online import OnlineFeatures
 from qf_guard.scoring import RiskScorer
+from qf_guard.temporal_graph import TemporalNeighborhood
 
 
 @dataclass(slots=True)
@@ -57,19 +58,31 @@ class RealtimeService:
 class EventScorer:
     """Score normalized events in source order with an independent incremental state."""
 
-    def __init__(self, scorer: RiskScorer):
+    def __init__(self, scorer: RiskScorer, *, warm_history=True):
         self.model = scorer
         scorer._check_fitted()
         self.features = OnlineFeatures(
             getattr(scorer, "confirmed_minute_", {}), getattr(scorer, "label_delay_minutes_", 1440),
             tuple(getattr(scorer, "feature_groups_", ()) or ()),
         )
-        if scorer.history_transactions_ is not None:
-            self.features.warm(scorer.history_transactions_)
+        self.temporal_graph = getattr(scorer, "temporal_graph_", None)
+        self.neighborhood = TemporalNeighborhood() if self.temporal_graph is not None else None
+        if warm_history and scorer.history_transactions_ is not None:
+            self.warm(scorer.history_transactions_)
+
+    def warm(self, events: pd.DataFrame) -> None:
+        self.features.warm(events)
+        if self.neighborhood is not None:
+            self.neighborhood.warm(events)
 
     def score(self, events: pd.DataFrame) -> pd.DataFrame:
-        batch, graph, matrix = self.features.transform(events.reset_index(drop=True))
+        events = events.reset_index(drop=True)
+        batch, graph, matrix = self.features.transform(events)
         columns = getattr(self.model, "feature_columns_", None)
         if columns is not None:
             matrix = matrix.loc[:, list(columns)]
-        return self.model._decisions(self.model._predict_components(batch, graph, matrix))
+        temporal_score = (self.temporal_graph.predict(self.neighborhood.transform(events))
+                          if self.neighborhood is not None else None)
+        return self.model._decisions(
+            self.model._predict_components(batch, graph, matrix, temporal_score=temporal_score)
+        )

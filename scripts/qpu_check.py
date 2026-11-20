@@ -21,7 +21,6 @@ import argparse
 import json
 import os
 import sys
-import time
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -47,6 +46,18 @@ def candidate_windows(scores: pd.DataFrame, threshold: float, size: int, count: 
     linked = [w for w in windows if candidate_edges(w)]
     order = np.random.default_rng(seed).permutation(len(linked))
     return [linked[i] for i in order[:count]]
+
+
+def measurement_evidence(attempt: dict) -> dict:
+    """Return the hardware configuration, sample counts and quality certificate for a batch."""
+    keys = (
+        "backend", "chip", "task_id", "shots", "physical_qubits", "readout_qubits",
+        "circuit_candidate_order", "reverse_provider_bits", "measured_counts", "logical_2q", "transpiled_2q",
+        "variant", "attempt_index", "gamma", "beta", "leader_bias", "leader_probability", "measured_reads",
+        "feasible_reads", "optimal_reads", "measured_hit", "certified", "selected_indices", "optimum_energy",
+        "error", "error_detail",
+    )
+    return {key: attempt[key] for key in keys if key in attempt}
 
 
 def main() -> int:
@@ -90,7 +101,6 @@ def main() -> int:
 
     rows = []
     for index, window in enumerate(windows):
-        started = time.perf_counter()
         try:
             selection = select_priority(window, solver, config, name=f"check_{index:02d}", certify_optimum=True,
                                         max_measurement_jobs=None if fast_quafu else 3)
@@ -109,9 +119,6 @@ def main() -> int:
             "hardware": meta.get("hardware"),
             "job_id": meta.get("task_id") or meta.get("problem_id"),
             "chip": meta.get("chip"),
-            "seconds": round(time.perf_counter() - started, 2),
-            "server_time_s": meta.get("server_time_s"),
-            "qpu_access_time_us": meta.get("qpu_access_time_us"),
             "matches_optimum": cert.get("matches_optimum"),
             "certified": bool(cert.get("certified")),
             "final_gap": cert.get("final_gap"),
@@ -139,19 +146,17 @@ def main() -> int:
                 repaired=meta["repaired"], local_search=meta["local_search"],
             )
             if attempts:
-                row.update(attempts=attempts, time_to_first_hit_s=cert["time_to_first_hit_s"])
+                row["attempts"] = [measurement_evidence(attempt) for attempt in attempts]
         if fast_quafu:
             row["primary_only"] = row["primary_only"] and row["backend"] == args.solver
             row.update(sampling_time_estimate(row.get("measured_reads")))
             verdict = "measured optimum" if row["primary_only"] and row.get("measured_hit") else "no confirmed primary hit"
             detail = f"{row.get('optimal_reads') or 0}/{row.get('measured_reads') or 0} optimal shots"
-            if row.get("time_to_first_hit_s") is not None:
-                detail += f", client received winning batch in {row['time_to_first_hit_s']:.3f} s"
             if "estimated_sampling_ms" in row:
                 detail += f", estimated sampling {row['estimated_sampling_ms']:.1f} ms at {row['assumed_shot_period_us']:g} us/shot"
         else:
             verdict = "optimal" if row["matches_optimum"] else f"gap {row['final_gap']}"
-            detail = f"{row['seconds']} s"
+            detail = f"{len(row['selected'])} selected"
         rows.append(row)
         where = f"fallback ({row['fallback_reason']})" if row["fallback_reason"] else row["hardware"]
         print(f"  window {index}: K={row['k']}/{row['n']} -> {verdict}; {row['backend']} on {where}; "
@@ -165,7 +170,7 @@ def main() -> int:
     else:
         print(f"optimal (MILP-certified): {optimal}/{len(rows)}; answered by {args.solver}: {on_primary}/{len(rows)}")
     if isinstance(solver, FallbackSolver) and not fast_quafu:
-        print(f"solver stats: {solver.stats()}")
+        print(f"primary calls: {solver.primary_calls}, fallback calls: {solver.fallback_calls}")
     passed = len(rows) == args.windows and optimal == on_primary == args.windows
     if fast_quafu:
         passed = passed and hits == args.windows

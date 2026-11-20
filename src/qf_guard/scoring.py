@@ -19,6 +19,7 @@ from qf_guard.features import (
     engineer_features,
     graph_risk_features,
 )
+from qf_guard.temporal_graph import TemporalGraphModel, TemporalNeighborhood
 
 
 RULE_WEIGHTS = {
@@ -48,6 +49,7 @@ class RiskScorer:
         self.validation_stats_: dict[str, float] = {}
         self.learned_weights_ = self.config.normalized_weights
         self.history_transactions_: pd.DataFrame | None = None
+        self.temporal_graph_: TemporalGraphModel | None = None
         self.is_fitted_ = False
 
     # ------------------------------------------------------------------ training
@@ -108,6 +110,13 @@ class RiskScorer:
         self.amount_threshold_ = float(train["amount"].quantile(AMOUNT_SPIKE_QUANTILE))
 
         self.calibrator = None
+        epochs = getattr(self.config, "temporal_graph_epochs", 0)
+        if epochs < 0:
+            raise ValueError("temporal graph epochs must be nonnegative")
+        self.temporal_graph_ = (
+            TemporalGraphModel.fit(train, seed=self.config.random_state, epochs=epochs)
+            if epochs else None
+        )
         self.history_transactions_ = self._feature_history(train)
         self.is_fitted_ = True
         raw_validation = self._score_components(validation)
@@ -116,9 +125,15 @@ class RiskScorer:
             _logit(raw_validation["supervised_score"].to_numpy()).reshape(-1, 1),
             y_validation,
         )
-        components = self._score_components(validation)
-        self._choose_weights(components, y_validation)
+        self._calibrate_risk(self._score_components(validation))
+        self.history_transactions_ = self._feature_history(train, validation)
+        # from now on (test / live stream) validation labels are confirmed too
+        self.confirmed_minute_ = _confirmed_minutes(train, validation)
+        return self
 
+    def _calibrate_risk(self, components: pd.DataFrame) -> None:
+        y_validation = components["is_fraud"].to_numpy()
+        self._choose_weights(components, y_validation)
         final = self._weighted(components, self.learned_weights_)
         target_recall = getattr(self.config, "target_recall", None)
         if target_recall:
@@ -150,16 +165,11 @@ class RiskScorer:
             "operational_candidate_threshold": self.candidate_threshold_,
             "review_threshold": review_threshold(final, self.candidate_threshold_, manual_rate),
             "review_rate_target": manual_rate,
-            "validation_rows": len(validation),
+            "validation_rows": len(components),
             "alert_hold_threshold": float(
                 max(self.candidate_threshold_, np.quantile(final, ALERT_HOLD_QUANTILE))
             ),
         }
-        self.history_transactions_ = self._feature_history(train, validation)
-        # from now on (test / live stream) validation labels are confirmed too
-        self.confirmed_minute_ = _confirmed_minutes(train, validation)
-        return self
-
     # ----------------------------------------------------------------- features
     def _model_matrix(
         self,
@@ -193,18 +203,26 @@ class RiskScorer:
     def _choose_weights(self, components: pd.DataFrame, labels: np.ndarray) -> None:
         """Grid-search fusion weights: maximise fraud retention, then precision ranking."""
 
+        minimum = getattr(self.config, "min_tgnn_weight", 0.0)
+        if not 0 <= minimum <= .95 or (minimum and "graph_model" not in components):
+            raise ValueError("a minimum TGNN weight of 0–0.95 requires a trained TGNN")
+        original = self.config.normalized_weights
+        best_weights = original
+        if minimum > original[2]:
+            scale = (1 - minimum) / (1 - original[2])
+            best_weights = (original[0] * scale, original[1] * scale, minimum, original[3] * scale)
         if not self.config.optimize_weights_on_validation:
-            self.learned_weights_ = self.config.normalized_weights
+            self.learned_weights_ = best_weights
             return
         from sklearn.metrics import average_precision_score
 
         step = self.config.weight_grid_step
         rate = self.config.target_candidate_rate
         levels = np.round(np.arange(0, 1 + 1e-9, step), 6)
-        best_key, best_weights = None, self.config.normalized_weights
+        best_key = None
         for alpha, beta, gamma in product(levels, repeat=3):
             delta = round(1 - alpha - beta - gamma, 6)
-            if delta < -1e-9 or alpha <= 0:
+            if delta < -1e-9 or alpha <= 0 or gamma < minimum:
                 continue
             weights = (float(alpha), float(beta), float(gamma), float(max(0.0, delta)))
             score = self._weighted(components, weights)
@@ -268,9 +286,24 @@ class RiskScorer:
         batch = engineer_features(frame, history=self.history_transactions_)
         graph = graph_risk_features(batch.transactions, history=self.history_transactions_)
         matrix = self._model_matrix(batch, frame, self.history_transactions_)
-        return self._predict_components(batch, graph, matrix)
+        temporal_score = None
+        if model := getattr(self, "temporal_graph_", None):
+            transactions, mask, _ = _transaction_context(frame, self.history_transactions_)
+            neighborhood = TemporalNeighborhood()
+            predictions = []
+            for start in range(0, len(transactions), 4096):
+                stop = start + 4096
+                chunk = transactions.iloc[start:stop]
+                select = None if mask is None else mask[start:stop]
+                if select is not None and not select.any():
+                    neighborhood.warm(chunk)
+                    continue
+                values = model.predict(neighborhood.transform(chunk))
+                predictions.append(values if select is None else values[select])
+            temporal_score = np.concatenate(predictions)
+        return self._predict_components(batch, graph, matrix, temporal_score=temporal_score)
 
-    def _predict_components(self, batch, graph, matrix) -> pd.DataFrame:
+    def _predict_components(self, batch, graph, matrix, *, temporal_score=None) -> pd.DataFrame:
         raw_probability = np.clip(
             self.supervised_model.predict_proba(matrix)[:, 1],
             1e-6,
@@ -292,7 +325,9 @@ class RiskScorer:
         result = batch.transactions.copy()
         result["supervised_score"] = np.clip(supervised, 0, 1)
         result["anomaly_score"] = anomaly
-        result["graph_score"] = graph["graph_score"].to_numpy()
+        result["graph_score"] = graph["graph_score"].to_numpy() if temporal_score is None else temporal_score
+        if temporal_score is not None:
+            result["graph_model"] = "tgnn"
         result["rule_score"] = rule.to_numpy()
         for column in rules:
             result[column] = rules[column].to_numpy()
@@ -345,6 +380,10 @@ class RiskScorer:
             raise TypeError("artifact is not a RiskScorer")
         if isinstance(model.config, ScoringConfig) and not hasattr(model.config, "review_rate"):
             model.config.review_rate = ScoringConfig().review_rate
+        if isinstance(model.config, ScoringConfig) and not hasattr(model.config, "temporal_graph_epochs"):
+            model.config.temporal_graph_epochs = 0
+        if isinstance(model.config, ScoringConfig) and not hasattr(model.config, "min_tgnn_weight"):
+            model.config.min_tgnn_weight = 0.0
         return model
 
 

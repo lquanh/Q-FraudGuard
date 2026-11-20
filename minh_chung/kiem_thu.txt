@@ -1,0 +1,6 @@
+Q-FraudGuard | Kiểm thử phần mềm từ bản mã nguồn đóng gói
+2026-11-20T16:30:07+07:00
+Python 3.13.1
+python -m pytest -q -p no:cacheprovider --disable-warnings
+
+Cả 190 ca kiểm thử đều đạt. Pytest ghi nhận 25 cảnh báo. Mã thoát bằng 0.

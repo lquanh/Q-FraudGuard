@@ -142,8 +142,6 @@ def main() -> int:
                 "gap": None if optimum is None else result.objective - optimum,
                 "feasible": result.feasible,
                 "repaired": result.metadata.get("repaired"),
-                "runtime_s": result.runtime,
-                "qpu_access_time_us": result.metadata.get("qpu_access_time_us", 0.0),
                 "chain_break_fraction": result.metadata.get("chain_break_fraction"),
                 "problem_id": result.metadata.get("problem_id"),
                 "hardware": result.metadata.get("hardware"),
@@ -158,8 +156,7 @@ def main() -> int:
         ok.groupby("solver", sort=False)
         .agg(windows=("window", "count"), optimal=("optimal", "mean"),
              raw_optimal=("raw_optimal", "mean"), mean_gap=("gap", "mean"),
-             feasible=("feasible", "mean"), mean_runtime_s=("runtime_s", "mean"),
-             qpu_ms_total=("qpu_access_time_us", lambda s: float(np.nansum(s)) / 1000),
+             feasible=("feasible", "mean"),
              selected_frauds=("selected_frauds", "sum"),
              same_as_greedy=("same_as_greedy_topk", "mean"))
     ) if len(ok) else pd.DataFrame()

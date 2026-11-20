@@ -1,4 +1,4 @@
-# Q-FraudGuard excerpt of IBM AMLworld HI-Small. Q-FraudGuard selected these records, assigned transaction IDs, combined bank and account IDs and added model risk scores. Original AMLworld labels are included for retrospective evaluation. CDLA-Sharing-1.0 (https://cdla.dev/sharing-1-0/).
+# Source: IBM AMLworld HI-Small (IBM, Erik Altman et al.), https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml . Q-FraudGuard selected these records, assigned transaction IDs, combined bank and account IDs and added model risk scores. Original AMLworld labels are included for retrospective evaluation. CDLA-Sharing-1.0 (https://cdla.dev/sharing-1-0/).
 transaction_id,risk_score,sender_id,receiver_id,is_fraud
 AML-002651103,0.0007688578274562663,125305:80957D980,125305:80957D980,0
 AML-002651104,0.11140129783044639,125305:80957D980,112989:804FFC170,0

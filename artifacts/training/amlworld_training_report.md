@@ -1,6 +1,6 @@
-# Đánh giá mô hình chấm điểm giao dịch trên CPU
+# So sánh mô hình sàng lọc trên AMLworld
 
-Thí nghiệm dùng `amlworld_hi_small_4d.csv`, một mẫu giao dịch tổng hợp IBM AMLworld. Mô hình được chọn theo PR-AUC trên tập xác thực. Ở các cấu hình dùng danh sách tài khoản đã xác nhận, nhãn được sử dụng sau 24 giờ.
+Thí nghiệm dùng `amlworld_hi_small_4d.csv`, một mẫu giao dịch tổng hợp IBM AMLworld. Mỗi cấu hình được đánh giá trên cùng tập kiểm tra theo thời gian. Tiêu chí chọn mô hình là Average Precision trên tập xác thực. Ở các cấu hình dùng danh sách tài khoản đã xác nhận, nhãn được sử dụng sau 24 giờ.
 
 Trên 275.911 giao dịch kiểm tra của mẫu này, mô hình `amlworld_tuned_scorer.joblib` đạt PR-AUC **0,518**. Trong 4% giao dịch có điểm cao nhất, mô hình giữ được **85,5%** số giao dịch rửa tiền của tập kiểm tra.
 

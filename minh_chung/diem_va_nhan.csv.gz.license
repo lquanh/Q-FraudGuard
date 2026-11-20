@@ -1,0 +1,4 @@
+SPDX-License-Identifier: CDLA-Sharing-1.0
+Source: IBM AMLworld HI-Small (IBM, Erik Altman et al.).
+https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml
+This derivative retains the original laundering label (is_fraud) for each row of the chronological test set. Q-FraudGuard added the score of its ten-day LightGBM configuration (risk_score). Rows retain evaluation order. See data/licenses/CDLA-Sharing-1.0.txt and data/licenses/LICENSES.md in the same package.

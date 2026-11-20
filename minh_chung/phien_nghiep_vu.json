@@ -1,0 +1,87 @@
+{
+  "time": "2026-11-20T13:24:14+07:00",
+  "workspace": {
+    "case_id": "AML-004060379",
+    "protocol": "recorded, luồng tổng hợp, sổ độc lập",
+    "before_admit": {
+      "review": 1,
+      "proposals": 3
+    },
+    "after_admit": {
+      "review": 2,
+      "proposals": 2
+    },
+    "journal_after_reopen": [
+      {
+        "kind": "decide",
+        "actor": "chuyenvien1",
+        "at": "2026-11-20T06:24:14.820353+00:00",
+        "detail": "request_verification · Yêu cầu đối chiếu chứng từ của giao dịch 170,49 USD."
+      },
+      {
+        "kind": "admit",
+        "actor": "chuyenvien1",
+        "at": "2026-11-20T06:24:14.810744+00:00",
+        "detail": "Đối chiếu ba hồ sơ có cùng tài khoản gửi trong phiên Haituo."
+      },
+      {
+        "kind": "run",
+        "actor": "Hệ thống",
+        "at": "2026-11-20T06:24:14.799Z",
+        "detail": "completed"
+      }
+    ]
+  },
+  "core_banking": {
+    "case_id": "MC-CORE-001",
+    "protocol": "HTTP v1 sandbox, ngưỡng cố định để thử hợp đồng",
+    "first_request": {
+      "received": 1,
+      "inserted": 1,
+      "duplicates": 0
+    },
+    "same_request_retried": {
+      "received": 1,
+      "inserted": 0,
+      "duplicates": 1
+    },
+    "receipt": {
+      "recorded": true
+    },
+    "receipt_retried": {
+      "recorded": true
+    },
+    "events": [
+      {
+        "id": 1,
+        "stream": "minh-chung-sandbox",
+        "transaction_id": "MC-CORE-001",
+        "account": "acct-demo-A",
+        "action": "route",
+        "actor": "Hệ thống",
+        "at": "2026-11-20T06:24:17.353674+00:00",
+        "previous": null,
+        "state": "awaiting_info",
+        "reason": "Ứng viên qua sàng lọc. Cần bổ sung thông tin giao dịch.",
+        "current_version": 2,
+        "current_state": "response_recorded"
+      },
+      {
+        "id": 2,
+        "stream": "minh-chung-sandbox",
+        "transaction_id": "MC-CORE-001",
+        "account": "acct-demo-A",
+        "action": "info_received",
+        "actor": "Khách hàng · acct-demo-A",
+        "at": "2026-11-20T06:24:17.390058+00:00",
+        "previous": "awaiting_info",
+        "state": "response_recorded",
+        "reason": "Đã đối soát hồ sơ minh họa.",
+        "current_version": 2,
+        "current_state": "response_recorded"
+      }
+    ],
+    "cursor": 2,
+    "next_page_events": []
+  }
+}

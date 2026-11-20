@@ -144,9 +144,10 @@ def training_markdown(report: dict) -> str:
     model_name = PureWindowsPath(report["saved_model"]).name
     test_size = f"{report['rows'][-1]:,}".replace(",", ".")
     lines = [
-        "# Đánh giá mô hình chấm điểm giao dịch trên CPU", "",
+        "# So sánh mô hình sàng lọc trên AMLworld", "",
         f"Thí nghiệm dùng `{data_name}`, một mẫu giao dịch tổng hợp IBM AMLworld. "
-        "Mô hình được chọn theo PR-AUC trên tập xác thực. "
+        "Mỗi cấu hình được đánh giá trên cùng tập kiểm tra theo thời gian. "
+        "Tiêu chí chọn mô hình là Average Precision trên tập xác thực. "
         f"Ở các cấu hình dùng danh sách tài khoản đã xác nhận, nhãn được sử dụng sau "
         f"{number(report['label_delay_minutes'] / 60, 'g')} giờ.", "",
         f"Trên {test_size} giao dịch kiểm tra của mẫu này, mô hình `{model_name}` "

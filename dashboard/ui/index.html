@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Q-FraudGuard · Quantum Risk Intelligence Cockpit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       Q-FRAUDGUARD BESPOKE DESIGN SYSTEM
+       Palette: #183B56 (Deep Navy) · #4D91B8 (Cerulean) · #DCECF5 (Soft Ice) · #FFFFFF (White)
+       Skills: Morphicons (Guillermo), Taste Skill (Leonxlnx), UI/UX Pro Max (NextLevelBuilder)
+       ========================================================================== */
+    :root {
+      --primary: #183B56;
+      --primary-dark: #0F273B;
+      --primary-light: #254B6B;
+      --accent: #4D91B8;
+      --accent-hover: #38789C;
+      --accent-light: #6BA8CC;
+      --bg-page: #DCECF5;
+      --surface: #FFFFFF;
+      --surface-subtle: #F4F9FC;
+      --surface-tint: #EBF4F9;
+      --border: #B8D5E5;
+      --border-light: #D0E4F0;
+      --border-focus: #4D91B8;
+      --text: #183B56;
+      --text-muted: #4D91B8;
+      --text-soft: #628299;
+      --text-inverse: #FFFFFF;
+      --alert: #A82236;
+      --alert-bg: #FDF2F4;
+      --alert-border: #F8CCD2;
+      --warning: #B45309;
+      --warning-bg: #FFFBEB;
+      --warning-border: #FDE68A;
+      --success: #168050;
+      --success-bg: #F0FDF5;
+      --success-border: #B9EDCE;
+      --font-mono: "Fira Code", monospace;
+      --font-body: "Fira Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 12px;
+      --space-lg: 16px;
+      --space-xl: 24px;
+      --space-2xl: 32px;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 3px rgba(24, 59, 86, 0.06);
+      --shadow-md: 0 4px 12px -2px rgba(24, 59, 86, 0.08), 0 2px 4px -2px rgba(24, 59, 86, 0.04);
+      --shadow-lg: 0 12px 24px -4px rgba(24, 59, 86, 0.12), 0 4px 8px -3px rgba(24, 59, 86, 0.06);
+      --shadow-tactile: 0 3px 0 #0F273B, 0 4px 10px rgba(24, 59, 86, 0.2);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-page);
+      color: var(--text);
+      line-height: 1.45;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Accessibility focus rings */
+    :focus-visible {
+      outline: 2.5px solid var(--border-focus) !important;
+      outline-offset: 2px !important;
+    }
+
+    /* Master Container */
+    .cockpit-container {
+      max-width: 1640px;
+      margin: 0 auto;
+      padding: 1rem 1.25rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ==========================================================================
+       MASTHEAD COMMAND HEADER (Taste Skill Line-Engraving & Editorial Typography)
+       ========================================================================== */
+    .masthead {
+      position: relative;
+      background: var(--primary);
+      color: var(--text-inverse);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem 1.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .masthead::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--qfg-engraving, url('../assets/engraving.webp')) center center / cover no-repeat;
+      mask-image: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.85) 70%, rgba(0,0,0,0.15) 100%);
+      opacity: 0.65;
+      pointer-events: none;
+    }
+
+    .brand-group {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      z-index: 2;
+    }
+
+    .brand-title h1 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+    }
+
+    .brand-title p {
+      font-size: 0.78rem;
+      color: #B5D4E6;
+      font-family: var(--font-mono);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .header-ticker-strip {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      z-index: 2;
+      flex-wrap: wrap;
+    }
+
+    .ticker-chip {
+      background: rgba(15, 39, 59, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid #386A87;
+      border-radius: var(--radius-full);
+      padding: 0.35rem 0.85rem;
+      font-size: 0.82rem;
+      color: #DCECF5;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-family: var(--font-mono);
+    }
+
+    /* ==========================================================================
+       SCOREBOARD BENTO STRIP (4 KPI Metrics)
+       ========================================================================== */
+    .scoreboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+      transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease, border-color 180ms ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent);
+    }
+
+    .metric-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-soft);
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+
+    .metric-value {
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: var(--primary);
+      font-variant-numeric: tabular-nums;
+      margin: 0.4rem 0 0.15rem;
+      line-height: 1.15;
+    }
+
+    /* ==========================================================================
+       MAIN COCKPIT: 3-COLUMN BENTO DECK (28% - 46% - 26%)
+       ========================================================================== */
+    .cockpit-deck {
+      display: grid;
+      grid-template-columns: minmax(320px, 1.15fr) minmax(460px, 1.85fr) minmax(310px, 1fr);
+      gap: 1.25rem;
+      align-items: start;
+    }
+
+    /* Column Panel Surfaces */
+    .deck-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      padding: 0.95rem 1.2rem;
+      border-bottom: 1px solid var(--border-light);
+      background: var(--surface-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .panel-header h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-header .badge-count {
+      background: var(--bg-page);
+      color: var(--primary);
+      padding: 0.15rem 0.55rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      border: 1px solid var(--border);
+    }
+
+    /* ==========================================================================
+       COLUMN 1: SMART INVESTIGATION QUEUE
+       ========================================================================== */
+    .queue-tabs {
+      display: flex;
+      padding: 0.5rem 0.8rem;
+      gap: 0.35rem;
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .queue-tab-btn {
+      flex: 1;
+      padding: 0.45rem 0.5rem;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-soft);
+      cursor: pointer;
+      transition: all 160ms ease;
+      text-align: center;
+    }
+
+    .queue-tab-btn:hover {
+      background: var(--bg-page);
+      color: var(--primary);
+    }
+
+    .queue-tab-btn.active {
+      background: var(--surface);
+      color: var(--accent);
+      border-color: var(--border);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      font-weight: 700;
+    }
+
+    .queue-filter-bar {
+      padding: 0.65rem 0.95rem;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.45rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-family: inherit;
+      color: var(--text);
+      background: #FFFFFF;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(77, 145, 184, 0.2);
+    }
+
+    .case-list-scroll {
+      max-height: 680px;
+      overflow-y: auto;
+      padding: 0.65rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .case-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem;
+      cursor: pointer;
+      transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      text-align: left;
+    }
+
+    .case-card:hover {
+      border-color: var(--accent);
+      background: var(--surface-subtle);
+      transform: translateX(2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .case-card.active {
+      border-color: var(--accent);
+      background: var(--surface-tint);
+      box-shadow: inset 4px 0 var(--accent), var(--shadow-sm);
+    }
+
+    .case-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.35rem;
+    }
+
+    .case-card-id {
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .risk-badge {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--radius-full);
+      letter-spacing: 0.02em;
+      font-family: var(--font-mono);
+      background: var(--surface-tint);
+      color: var(--primary);
+      border: 1px solid var(--border);
+    }
+
+    .case-card-amount {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .case-card-details {
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.35rem;
+    }
+
+    .case-tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.45rem;
+    }
+
+    .tag-chip {
+      font-size: 0.7rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: var(--radius-sm);
+      background: var(--bg-page);
+      color: var(--primary);
+      font-family: var(--font-mono);
+    }
+
+    /* ==========================================================================
+       COLUMN 2: VISUAL NETWORK GRAPH & BRAND NEW CASE RESOLUTION FORM
+       ========================================================================== */
+    .investigation-center {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Graph Canvas Box */
+    .graph-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .graph-header-bar {
+      padding: 0.75rem 1.1rem;
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .graph-header-bar strong {
+      font-size: 0.96rem;
+      color: var(--primary);
+    }
+
+    .graph-layer-toggles {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .layer-btn {
+      font-size: 0.76rem;
+      padding: 0.25rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 140ms ease;
+    }
+
+    .layer-btn.active {
+      background: var(--primary);
+      color: #FFFFFF;
+      border-color: var(--primary);
+    }
+
+    .svg-canvas-stage {
+      position: relative;
+      background-color: #F8FBFD;
+      background-image: radial-gradient(var(--border) 1px, transparent 1px);
+      background-size: 16px 16px;
+      padding: 0.5rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .svg-canvas-stage svg {
+      width: 100%;
+      max-height: 280px;
+    }
+
+    /* Dossier Facts Grid */
+    .dossier-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      background: var(--surface-subtle);
+      border-top: 1px solid var(--border-light);
+    }
+
+    .dossier-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .dossier-label {
+      font-size: 0.76rem;
+      color: var(--text-soft);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .dossier-val {
+      font-family: var(--font-mono);
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--primary);
+      overflow-wrap: anywhere;
+    }
+
+    /* Multi-dimension Risk Breakdown */
+    .risk-breakdown-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0.95rem 1.15rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .risk-breakdown-card h3 {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.65rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .meter-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 50px;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 0.45rem;
+      font-size: 0.82rem;
+    }
+
+    .meter-track {
+      height: 7px;
+      background: var(--bg-page);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      border-radius: var(--radius-full);
+      transition: width 300ms ease;
+    }
+
+    .meter-fill.alert { background: linear-gradient(90deg, #F59E0B, #EF4444); }
+    .meter-fill.accent { background: linear-gradient(90deg, #4D91B8, #183B56); }
+
+    /* ==========================================================================
+       THE BRAND NEW CASE RESOLUTION FORM (Hoàn toàn mới, không đè)
+       ========================================================================== */
+    .resolution-form-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1.35rem;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+    }
+
+    .form-heading-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 0.75rem;
+    }
+
+    .form-heading-row h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-heading-row span {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      font-family: var(--font-mono);
+    }
+
+    /* 4 Tactile Decision Action Cards */
+    .action-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .action-card-btn {
+      position: relative;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .action-card-btn:hover {
+      border-color: var(--accent);
+      background: var(--surface-subtle);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .action-card-btn:active {
+      transform: translateY(1px);
+    }
+
+    .action-card-btn.selected {
+      border-color: var(--primary);
+      background: var(--surface-tint);
+      box-shadow: 0 0 0 2px var(--primary), var(--shadow-sm);
+    }
+
+    .action-card-btn strong {
+      display: block;
+      font-size: 0.92rem;
+      color: var(--primary);
+      margin-bottom: 0.2rem;
+    }
+
+    .action-card-btn p {
+      font-size: 0.76rem;
+      color: var(--text-soft);
+      line-height: 1.3;
+    }
+
+    /* Preset Quick Reason Chips */
+    .preset-chips-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .preset-chips-box label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-soft);
+    }
+
+    .chips-flex {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .chip-btn {
+      font-size: 0.78rem;
+      padding: 0.3rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      background: var(--surface);
+      color: var(--primary);
+      cursor: pointer;
+      transition: all 140ms ease;
+    }
+
+    .chip-btn:hover {
+      background: var(--bg-page);
+      border-color: var(--accent);
+    }
+
+    .chip-btn.active {
+      background: var(--primary);
+      color: #FFFFFF;
+      border-color: var(--primary);
+    }
+
+    /* Notes Area */
+    .form-field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .form-field-group label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .notes-textarea {
+      width: 100%;
+      height: 76px;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.86rem;
+      color: var(--text);
+      resize: vertical;
+      background: #FFFFFF;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    .notes-textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(77, 145, 184, 0.2);
+    }
+
+    /* Tactile Submit Button (UI/UX Pro Max 3D Tactile Elevation) */
+    .tactile-submit-btn {
+      width: 100%;
+      background: linear-gradient(180deg, #183B56 0%, #102B3F 100%);
+      color: #FFFFFF;
+      border: 1px solid #0D2232;
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1.4rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      box-shadow: var(--shadow-tactile);
+      transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 140ms ease, background 140ms ease;
+    }
+
+    .tactile-submit-btn:hover {
+      background: linear-gradient(180deg, #244E70 0%, #183B56 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 0 #0F273B, 0 8px 18px rgba(24, 59, 86, 0.3);
+    }
+
+    .tactile-submit-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #0F273B, 0 2px 4px rgba(24, 59, 86, 0.2);
+    }
+
+    /* ==========================================================================
+       AUDIT LOG
+       ========================================================================== */
+    .audit-column {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Quantum Telemetry Card */
+
+    /* Audit Journal Feed */
+    .journal-feed {
+      max-height: 480px;
+      overflow-y: auto;
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .journal-item {
+      position: relative;
+      padding: .35rem 0 .5rem;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 0.82rem;
+    }
+
+    .journal-meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-soft);
+      font-size: 0.74rem;
+      font-family: var(--font-mono);
+      margin-bottom: 0.15rem;
+    }
+
+    .journal-item strong {
+      color: var(--primary);
+      font-family: var(--font-mono);
+    }
+
+    .journal-desc {
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    /* Toast Notification */
+    .cockpit-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--primary);
+      color: #FFFFFF;
+      padding: 0.85rem 1.4rem;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transform: translateY(120px);
+      opacity: 0;
+      transition: all 260ms cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+      border: 1px solid var(--accent);
+    }
+
+    .cockpit-toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Responsive */
+    @media (max-width: 1280px) {
+      .cockpit-deck {
+        grid-template-columns: 1fr 1.6fr;
+      }
+      .audit-column { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 860px) {
+      .scoreboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .cockpit-deck {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .action-cards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .audit-column { min-width: 0; }
+    button.case-card { display: block; width: 100%; text-align: left; font: inherit; }
+    button.case-card[hidden] { display: none; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    @media (max-width: 420px) {
+      .scoreboard-grid { grid-template-columns: minmax(0, 1fr); gap: .55rem; }
+      .graph-header-bar, .form-heading-row { flex-wrap: wrap; gap: .5rem; }
+      .dossier-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dossier-val { overflow-wrap: anywhere; }
+      .cockpit-toast { right: 16px; max-width: calc(100vw - 32px); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cockpit-container wrap">
+
+  <!-- ========================================================================
+       MASTHEAD COMMAND HEADER
+       ======================================================================== -->
+  <header class="masthead">
+    <div class="brand-group">
+      <div class="brand-title">
+        <h1>Q-FraudGuard</h1>
+        <p>Bàn điều tra giao dịch</p>
+      </div>
+    </div>
+
+    <div class="header-ticker-strip">
+      <span class="ticker-chip">Bản xem trước</span>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       SCOREBOARD BENTO STRIP
+       ======================================================================== -->
+  <section class="scoreboard-grid" aria-label="Tổng quan">
+    <div class="metric-card">
+      <div class="metric-header">Giao dịch đã chấm điểm</div>
+      <div class="metric-value" id="kpiProcessed">7.808</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-header">Ứng viên qua sàng lọc</div>
+      <div class="metric-value" id="kpiCandidates">217</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-header">Hồ sơ trong bản xem trước</div>
+      <div class="metric-value" id="kpiCaseCount">—</div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       MAIN COCKPIT: 3-COLUMN DECK
+       ======================================================================== -->
+  <main class="cockpit-deck">
+
+    <!-- COLUMN 1: SMART INVESTIGATION QUEUE -->
+    <section class="deck-panel">
+      <div class="panel-header">
+        <h2>
+          <span>Hàng chờ điều tra</span>
+        </h2>
+        <span class="badge-count" id="queueCountBadge">0 hồ sơ</span>
+      </div>
+
+      <div class="queue-tabs">
+        <button class="queue-tab-btn active" aria-pressed="true" data-tab="urgent" onclick="switchQueueTab('urgent')">Cần xem xét</button>
+        <button class="queue-tab-btn" aria-pressed="false" data-tab="waiting" onclick="switchQueueTab('waiting')">Chờ khách hàng</button>
+        <button class="queue-tab-btn" aria-pressed="false" data-tab="blocked" onclick="switchQueueTab('blocked')">Đang hạn chế</button>
+      </div>
+
+      <div class="queue-filter-bar">
+        <input type="text" class="search-input" id="caseSearchInput" aria-label="Mã giao dịch hoặc số tài khoản" placeholder="Tìm theo mã giao dịch hoặc số tài khoản" oninput="renderCaseList()">
+      </div>
+
+      <div class="case-list-scroll" id="caseListContainer" aria-live="polite">
+        <!-- Rendered dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- COLUMN 2: VISUAL INVESTIGATION & BESPOKE RESOLUTION FORM -->
+    <section class="investigation-center">
+
+      <!-- Transaction Graph preview -->
+      <div class="graph-card">
+        <div class="graph-header-bar">
+          <div>
+            <strong id="graphTitle">Transaction Graph</strong>
+            <p style="font-size: 0.78rem; color: var(--text-soft);" id="graphSubtitle">Minh họa hướng giao dịch và quan hệ tài khoản</p>
+          </div>
+          <div class="graph-layer-toggles">
+            <button class="layer-btn active" aria-pressed="true" onclick="toggleGraphLayer(this, 'flow')">Dòng tiền</button>
+            <button class="layer-btn active" aria-pressed="true" onclick="toggleGraphLayer(this, 'relation')">Hành vi</button>
+            <button class="layer-btn" aria-pressed="false" onclick="toggleGraphLayer(this, 'risk')">Risk Score</button>
+          </div>
+        </div>
+
+        <div class="svg-canvas-stage">
+          <svg viewBox="0 0 520 280" id="caseGraphSvg" role="img" aria-label="Transaction Graph minh họa">
+            
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+                <path d="M0,0 L0,6 L8,3 z" fill="#4D91B8"/>
+              </marker>
+              <marker id="arrow-alert" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+                <path d="M0,0 L0,6 L8,3 z" fill="#A82236"/>
+              </marker>
+            </defs>
+
+            <!-- Connections -->
+            <path d="M 120 70 Q 260 20 400 70" fill="none" stroke="#4D91B8" stroke-width="2.5" stroke-dasharray="6,4" marker-end="url(#arrow)" id="edge1"/>
+            <path d="M 400 70 Q 420 180 260 210" fill="none" stroke="#A82236" stroke-width="3" stroke-dasharray="none" marker-end="url(#arrow-alert)" id="edge2"/>
+            <path d="M 260 210 Q 140 180 120 70" fill="none" stroke="#4D91B8" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrow)" id="edge3"/>
+            <line x1="120" y1="70" x2="260" y2="210" stroke="#F59E0B" stroke-width="1.8" stroke-dasharray="3,3" id="edgeCross"/>
+
+            <!-- Node 1: Sender -->
+            <g class="graph-node" transform="translate(120, 70)">
+              <circle r="26" fill="#DCECF5" stroke="#4D91B8" stroke-width="2.5"/>
+              <text y="-5" text-anchor="middle" font-size="8" fill="#4D91B8" font-weight="600">GỬI</text>
+              <text y="9" text-anchor="middle" font-size="9.5" fill="#183B56" font-weight="700" id="nodeSenderText">#803D0EB</text>
+            </g>
+
+            <!-- Node 2: Target / Mule 1 -->
+            <g class="graph-node" transform="translate(400, 70)">
+              <circle r="26" fill="#FFF5F4" stroke="#A82236" stroke-width="2.5"/>
+              <text y="-5" text-anchor="middle" font-size="8" fill="#A82236" font-weight="600">THỤ HƯỞNG</text>
+              <text y="9" text-anchor="middle" font-size="9.5" fill="#183B56" font-weight="700" id="nodeReceiverText">#80EC2DD</text>
+            </g>
+
+            <!-- Node 3: Mule 2 / Ring Return -->
+            <g class="graph-node" transform="translate(260, 210)">
+              <circle r="24" fill="#DCECF5" stroke="#4D91B8" stroke-width="2"/>
+              <text y="-4" text-anchor="middle" font-size="8" fill="#4D91B8" font-weight="600">TRUNG GIAN</text>
+              <text y="9" text-anchor="middle" font-size="9.5" fill="#183B56" font-weight="700">#80AEF4C</text>
+            </g>
+
+            <!-- Transaction Center Badge -->
+            <rect x="220" y="90" width="80" height="26" rx="6" fill="#183B56" stroke="#4D91B8" stroke-width="1.5"/>
+            <text x="260" y="107" text-anchor="middle" fill="#FFFFFF" font-size="9.5" font-weight="700" font-family="monospace" id="graphAmountText">$3,198.62</text>
+          </svg>
+        </div>
+
+        <!-- Dossier Facts -->
+        <div class="dossier-grid">
+          <div class="dossier-item">
+            <span class="dossier-label">Mã giao dịch</span>
+            <span class="dossier-val" id="dossierTxId">R1/AML-000092252</span>
+          </div>
+          <div class="dossier-item">
+            <span class="dossier-label">Tài khoản gửi</span>
+            <span class="dossier-val" id="dossierSender">13264:803D0EB90</span>
+          </div>
+          <div class="dossier-item">
+            <span class="dossier-label">Tài khoản nhận</span>
+            <span class="dossier-val" id="dossierReceiver">227171:80EC2DDC0</span>
+          </div>
+          <div class="dossier-item">
+            <span class="dossier-label">Số tiền và kênh</span>
+            <span class="dossier-val" id="dossierAmount">$3,198.62 USD (ACH)</span>
+          </div>
+          <div class="dossier-item">
+            <span class="dossier-label">Thời điểm giao dịch</span>
+            <span class="dossier-val" id="dossierTime">2026-11-20 02:13:27</span>
+          </div>
+          <div class="dossier-item">
+            <span class="dossier-label">Trạng thái / SLA</span>
+            <span class="dossier-val" style="color: var(--alert);" id="dossierSla">Còn 1h 42m</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="risk-breakdown-card">
+        <h3><span>Risk Score Breakdown</span><span id="riskSummaryPct">Risk Score · —</span></h3>
+        <div id="riskComponents"></div>
+      </div>
+
+      <!-- ====================================================================
+           BRAND NEW CASE RESOLUTION FORM (Form hoàn toàn mới)
+           ==================================================================== -->
+      <div class="resolution-form-card">
+        <div class="form-heading-row">
+          <h3>
+            <span>Thao tác chuyên viên</span>
+          </h3>
+          <span>ID: <b id="formCaseTarget">R1/AML-000092252</b></span>
+        </div>
+
+        <!-- Analyst actions -->
+        <div class="action-cards-grid">
+          <button type="button" class="action-card-btn btn-approve" data-decision="approve" onclick="selectDecision('approve')">
+            <div>
+              <strong>Đề nghị cho tiếp tục</strong>
+              <p>Ghi đề nghị cho ngân hàng xử lý</p>
+            </div>
+          </button>
+
+          <button type="button" class="action-card-btn btn-verify selected" data-decision="verify" onclick="selectDecision('verify')">
+            <div>
+              <strong>Yêu cầu xác minh tăng cường</strong>
+              <p>Ghi yêu cầu xác minh khách hàng</p>
+            </div>
+          </button>
+
+          <button type="button" class="action-card-btn btn-hold" data-decision="hold" onclick="selectDecision('hold')">
+            <div>
+              <strong>Đề nghị tạm giữ giao dịch</strong>
+              <p>Ghi đề nghị để chuyên viên điều tra</p>
+            </div>
+          </button>
+
+          <button type="button" class="action-card-btn btn-sar" data-decision="sar" onclick="selectDecision('sar')">
+            <div>
+              <strong>Đề nghị rà soát SAR</strong>
+              <p>Chuyển xem xét báo cáo giao dịch đáng ngờ</p>
+            </div>
+          </button>
+        </div>
+
+        <!-- Preset Reason Chips -->
+        <div class="preset-chips-box">
+          <label>Gợi ý lý do</label>
+          <div class="chips-flex">
+            <button type="button" class="chip-btn" onclick="toggleReasonChip(this, 'Nghi vấn tài khoản trung chuyển (Mule Account)')">Mule Account</button>
+            <button type="button" class="chip-btn" onclick="toggleReasonChip(this, 'Nghi vấn chia nhỏ giao dịch (Smurfing)')">Smurfing</button>
+            <button type="button" class="chip-btn" onclick="toggleReasonChip(this, 'Giao dịch đột biến ngoài giờ')">Đột biến ngoài giờ</button>
+            <button type="button" class="chip-btn" onclick="toggleReasonChip(this, 'Thiết bị đăng nhập lạ')">Thiết bị lạ</button>
+          </div>
+        </div>
+
+        <!-- Notes Field -->
+        <div class="form-field-group">
+          <label for="analystNotes">Căn cứ xử lý</label>
+          <textarea id="analystNotes" class="notes-textarea" placeholder="Ghi giao dịch hoặc chứng từ đã đối chiếu"></textarea>
+        </div>
+
+        <!-- Preview action -->
+        <button type="button" class="tactile-submit-btn" id="submitDecisionBtn" onclick="executeDecision()">
+          <span id="btnSubmitText">Ghi thao tác minh họa</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- AUDIT LOG -->
+    <section class="audit-column">
+
+      <!-- Real-Time Audit Journal -->
+      <div class="deck-panel">
+        <div class="panel-header">
+          <h2>
+            <span>Audit Log</span>
+          </h2>
+          
+        </div>
+
+        <div class="journal-feed" id="journalFeedContainer">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Interactive Toast Notification -->
+  <div class="cockpit-toast" id="cockpitToast">
+    <span id="toastMessage" role="status"></span>
+  </div>
+
+</div>
+
+<!-- QFG_COCKPIT_DATA -->
+<script>
+  const cockpitData = window.qfgCockpitData;
+  const CASES_DATA = cockpitData?.cases ?? [
+    {
+      txid: "R1/AML-000092252",
+      amount: 3198.62,
+      currency: "USD",
+      format: "ACH",
+      sender: "13264:803D0EB90",
+      receiver: "227171:80EC2DDC0",
+      riskScore: 0.94,
+      signals: [0.93, 0.88, 0.95, 0.62],
+      category: "urgent",
+      time: "2026-11-20 02:13:27",
+      tags: ["SMURFING", "MULE_ACCOUNT", "VELOCITY_SPIKE"],
+      sla: "Còn 1h 42m",
+      notes: "Phát hiện mô hình chuyển tiền phân tán qua nhiều tài khoản phụ trước khi gom về tài khoản thụ hưởng. Yêu cầu khách hàng xác minh KYC cấp độ 2."
+    },
+    {
+      txid: "R1/AML-000119907",
+      amount: 168.91,
+      currency: "USD",
+      format: "Cheque",
+      sender: "70:100428660",
+      receiver: "219969:813E59EF0",
+      riskScore: 0.88,
+      category: "urgent",
+      time: "2026-11-20 02:14:02",
+      tags: ["SHARED_DEVICE", "RAPID_ACTIVITY"],
+      sla: "Còn 1h 55m",
+      notes: "Thiết bị đăng nhập trùng với 4 tài khoản khác trong danh sách đen."
+    },
+    {
+      txid: "R1/AML-000114903",
+      amount: 9119.31,
+      currency: "USD",
+      format: "ACH",
+      sender: "337405:8132EE8B0",
+      receiver: "11899:81329D500",
+      riskScore: 0.79,
+      category: "urgent",
+      time: "2026-11-20 02:15:10",
+      tags: ["HIGH_AMOUNT", "NEW_ACCOUNT"],
+      sla: "Còn 2h 10m",
+      notes: "Tài khoản mở dưới 48 giờ thực hiện giao dịch gần ngưỡng báo cáo."
+    },
+    {
+      txid: "R1/AML-000166119",
+      amount: 9338.02,
+      currency: "EUR",
+      format: "ACH",
+      sender: "31999:80AEF4CA0",
+      receiver: "29814:80AEF4AC0",
+      riskScore: 0.75,
+      category: "waiting",
+      time: "2026-11-20 02:16:44",
+      tags: ["CROSS_BORDER", "KYC_PENDING"],
+      sla: "Chờ khách hàng",
+      notes: "Đang chờ khách hàng xác thực chứng từ nguồn tiền thanh toán quốc tế."
+    },
+    {
+      txid: "R1/AML-000208804",
+      amount: 9091.34,
+      currency: "CNY",
+      format: "ACH",
+      sender: "14:804C0F170",
+      receiver: "18107:80F5EF360",
+      riskScore: 0.71,
+      category: "waiting",
+      time: "2026-11-20 02:17:15",
+      tags: ["FOREIGN_EXCHANGE"],
+      sla: "Chờ khách hàng",
+      notes: "Chờ đối soát thông tin định danh người nhận."
+    },
+    {
+      txid: "R1/AML-000242153",
+      amount: 45000.00,
+      currency: "USD",
+      format: "Wire",
+      sender: "9910:8001140A0",
+      receiver: "5512:8009941C0",
+      riskScore: 0.98,
+      category: "blocked",
+      time: "2026-11-20 02:10:05",
+      tags: ["SAR_FILED", "ASSET_FROZEN"],
+      sla: "Đã đóng băng",
+      notes: "Đã nộp báo cáo SAR và phong tỏa tài sản thành công theo yêu cầu liên ngân hàng."
+    }
+  ];
+
+  let currentTab = "urgent";
+  let activeCase = null;
+  let selectedDecision = "verify";
+
+  const AUDIT_JOURNAL = cockpitData?.audit ?? [
+    { txid: "R1/AML-000242153", action: "Đề nghị rà soát SAR", actor: "Chuyên viên Nguyễn", time: "10:14:05", desc: "Ghi nhận luồng tiền qua các tài khoản liên quan." },
+    { txid: "R1/AML-000199411", action: "DUYỆT GIAO DỊCH", actor: "Chuyên viên Trần", time: "10:08:22", desc: "Khách hàng bổ sung hóa đơn hợp lệ, bỏ chặn." },
+    { txid: "accc8a3a95", action: "Ưu tiên hồ sơ", actor: "Hệ thống", time: "10:00:15", desc: "Tối ưu hóa thành công 8 ứng viên, chọn 2 hồ sơ ưu tiên." }
+  ];
+
+  const scoreFormat = new Intl.NumberFormat('vi-VN', {minimumFractionDigits: 3, maximumFractionDigits: 3});
+  const countFormat = new Intl.NumberFormat('vi-VN');
+  const moneyFormat = new Intl.NumberFormat('vi-VN', {maximumFractionDigits: 2});
+  const scoreText = value => Number.isFinite(value) ? scoreFormat.format(value) : '—';
+  const transactionAmount = item => Number.isFinite(item?.amount)
+    ? moneyFormat.format(item.amount) + ' ' + item.currency
+    : '—';
+
+  function element(tag, className, text) {
+    const node = document.createElement(tag);
+    node.className = className;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function renderCaseList() {
+    const container = document.getElementById('caseListContainer');
+    const search = document.getElementById('caseSearchInput').value.trim().toLowerCase();
+    const group = CASES_DATA.filter(item => item.category === currentTab);
+    const cases = group.filter(item => [item.txid, item.sender, item.receiver].join(' ').toLowerCase().includes(search));
+    document.getElementById('queueCountBadge').textContent = countFormat.format(cases.length) + ' hồ sơ';
+    container.replaceChildren();
+    if (!cases.length) {
+      container.textContent = search ? 'Không tìm thấy hồ sơ theo từ khóa.' : 'Chưa có hồ sơ trong mục này.';
+    }
+    for (const item of cases) {
+      const active = item.txid === activeCase?.txid;
+      const button = element('button', active ? 'case-card active' : 'case-card');
+      button.type = 'button';
+      button.dataset.case = item.txid;
+      button.setAttribute('aria-pressed', String(active));
+      button.addEventListener('click', () => {
+        selectCase(item.txid);
+        [...container.querySelectorAll('button')].find(node => node.dataset.case === item.txid)?.focus();
+      });
+      const header = element('span', 'case-card-top');
+      const risk = element('span', 'risk-badge', scoreText(item.riskScore));
+      risk.setAttribute('aria-label', 'Risk Score ' + scoreText(item.riskScore));
+      header.append(element('span', 'case-card-id', item.txid), risk);
+      const details = element('span', 'case-card-details');
+      details.append(element('span', '', item.format), element('span', '', item.sla));
+      const tags = element('span', 'case-tags-row');
+      tags.append(...item.tags.map(tag => element('span', 'tag-chip', tag)));
+      button.append(header, element('span', 'case-card-amount', transactionAmount(item)), details, tags);
+      container.append(button);
+    }
+  }
+
+  function selectCase(txid) {
+    activeCase = CASES_DATA.find(item => item.txid === txid) ?? null;
+    const fields = {
+      dossierTxId: activeCase?.txid,
+      dossierSender: activeCase?.sender,
+      dossierReceiver: activeCase?.receiver,
+      dossierAmount: activeCase ? transactionAmount(activeCase) + ' (' + activeCase.format + ')' : null,
+      dossierTime: activeCase?.time,
+      dossierSla: activeCase?.sla,
+      formCaseTarget: activeCase?.txid,
+      graphAmountText: transactionAmount(activeCase),
+      nodeSenderText: activeCase?.sender.slice(-7),
+      nodeReceiverText: activeCase?.receiver.slice(-7),
+      riskSummaryPct: 'Risk Score · ' + scoreText(activeCase?.riskScore),
+    };
+    for (const [id, value] of Object.entries(fields)) {
+      document.getElementById(id).textContent = value ?? '—';
+    }
+    document.getElementById('analystNotes').value = activeCase?.notes ?? '';
+    document.getElementById('submitDecisionBtn').disabled = !activeCase;
+    document.querySelectorAll('.chip-btn').forEach(button => {
+      button.classList.remove('active');
+      button.setAttribute('aria-pressed', 'false');
+    });
+    selectDecision('verify');
+    const breakdown = document.getElementById('riskComponents');
+    breakdown.replaceChildren();
+    ['Supervised Learning', 'Anomaly Detection', activeCase?.graphModel === 'tgnn' ? 'TGNN Score' : 'Graph Score', 'Rule-based Score'].forEach((label, index) => {
+      const value = activeCase?.signals?.[index];
+      const row = element('div', 'meter-row');
+      const track = element('div', 'meter-track');
+      track.setAttribute('aria-hidden', 'true');
+      const fill = element('div', 'meter-fill accent');
+      fill.style.width = (Number.isFinite(value) ? Math.max(0, Math.min(1, value)) * 100 : 0) + '%';
+      track.append(fill);
+      row.append(element('span', '', label), track, element('strong', '', scoreText(value)));
+      breakdown.append(row);
+    });
+    renderCaseList();
+  }
+
+  function switchQueueTab(tabName) {
+    currentTab = tabName;
+    document.querySelectorAll('.queue-tab-btn').forEach(btn => {
+      const active = btn.dataset.tab === tabName;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-pressed', String(active));
+    });
+    selectCase(CASES_DATA.find(item => item.category === tabName)?.txid);
+  }
+
+  function selectDecision(decision) {
+    selectedDecision = decision;
+    document.querySelectorAll('.action-card-btn').forEach(btn => {
+      const active = btn.dataset.decision === decision;
+      btn.classList.toggle('selected', active);
+      btn.setAttribute('aria-pressed', String(active));
+    });
+  }
+
+  function toggleReasonChip(btn, reason) {
+    const active = btn.classList.toggle('active');
+    btn.setAttribute('aria-pressed', String(active));
+    const notes = document.getElementById('analystNotes');
+    const lines = notes.value.split('\n');
+    if (active && !lines.includes(reason)) {
+      notes.value = [notes.value.trim(), reason].filter(Boolean).join('\n');
+    } else if (!active) {
+      notes.value = lines.filter(line => line !== reason).join('\n');
+    }
+  }
+
+  function toggleGraphLayer(btn, layer) {
+    const active = btn.classList.toggle('active');
+    btn.setAttribute('aria-pressed', String(active));
+    const edges = {flow: ['edge2'], relation: ['edge1', 'edge3'], risk: ['edgeCross']};
+    for (const id of edges[layer]) document.getElementById(id).style.opacity = active ? '1' : '0.15';
+  }
+
+  function renderAuditJournal() {
+    const container = document.getElementById('journalFeedContainer');
+    container.replaceChildren();
+    if (!AUDIT_JOURNAL.length) container.textContent = 'Chưa có mục nhật ký.';
+    for (const item of AUDIT_JOURNAL) {
+      const row = element('article', 'journal-item');
+      const meta = element('div', 'journal-meta');
+      meta.append(element('span', '', item.actor), element('span', '', item.time));
+      row.append(meta, element('strong', '', item.action + ' · ' + item.txid), element('p', 'journal-desc', item.desc));
+      container.append(row);
+    }
+  }
+
+  let toastTimer;
+  function executeDecision() {
+    if (!activeCase) return;
+    const notes = document.getElementById('analystNotes').value.trim();
+    const actions = {
+      approve: 'Đề nghị cho tiếp tục',
+      verify: 'Yêu cầu xác minh tăng cường',
+      hold: 'Đề nghị tạm giữ giao dịch',
+      sar: 'Đề nghị rà soát SAR',
+    };
+    AUDIT_JOURNAL.unshift({
+      txid: activeCase.txid,
+      action: actions[selectedDecision],
+      actor: 'Chuyên viên',
+      time: new Date().toLocaleTimeString('vi-VN'),
+      desc: notes || 'Thao tác minh họa',
+    });
+    renderAuditJournal();
+    const toast = document.getElementById('cockpitToast');
+    document.getElementById('toastMessage').textContent = 'Đã ghi thao tác trong bản xem trước.';
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  if (cockpitData) {
+    document.getElementById('kpiProcessed').textContent = countFormat.format(cockpitData.processed);
+    document.getElementById('kpiCandidates').textContent = countFormat.format(cockpitData.candidates);
+  }
+  document.getElementById('kpiCaseCount').textContent = countFormat.format(CASES_DATA.length);
+  document.getElementById('edgeCross').style.opacity = '0.15';
+  switchQueueTab(CASES_DATA[0]?.category ?? 'urgent');
+  renderAuditJournal();
+</script>
+
+</body>
+</html>

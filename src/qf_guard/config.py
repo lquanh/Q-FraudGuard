@@ -27,6 +27,9 @@ class ScoringConfig:
     target_recall: float | None = None
     # Fraction of validation transactions that the manual review team can handle.
     review_rate: float = .02
+    # Zero keeps the original graph features. A positive value trains temporal message passing.
+    temporal_graph_epochs: int = 0
+    min_tgnn_weight: float = 0.0
 
     @property
     def normalized_weights(self) -> tuple[float, float, float, float]:

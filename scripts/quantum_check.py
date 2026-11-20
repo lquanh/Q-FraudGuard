@@ -63,8 +63,6 @@ def main() -> int:
         "optimal_energy": exact.objective,
         "feasible_reads": result.metadata["num_feasible_samples"],
         "chain_break_fraction": result.metadata["chain_break_fraction"],
-        "qpu_access_time_ms": result.metadata["qpu_access_time_us"] / 1000,
-        "wall_time_s": result.runtime,
     }
     print(json.dumps(report, indent=2, default=str))
     return 0

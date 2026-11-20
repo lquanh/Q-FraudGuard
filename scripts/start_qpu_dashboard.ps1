@@ -1,10 +1,10 @@
-# Start the Q-FraudGuard dashboard on a QPU backend after a short deployment check.
+# Start the Q-FraudGuard dashboard locally on CPU. Select a provider explicitly for a hardware run.
 #   scripts\start_qpu_dashboard.ps1 -Solver quafu-qpu      (Quafu-SQC; needs QPU_API_TOKEN)
 #   scripts\start_qpu_dashboard.ps1 -Solver dwave-qpu      (D-Wave Leap; needs DWAVE_API_TOKEN)
 # Tokens are read from the environment or the git-ignored .env and never printed.
 param(
-    [ValidateSet("quafu-qpu", "quafu-mock", "quafu-anneal-qpu", "quafu-anneal-mock", "quafu-fast-qpu", "quafu-fast-mock", "dwave-qpu", "dwave-hybrid", "dwave-mock")]
-    [string]$Solver = "quafu-qpu",
+    [ValidateSet("exact", "sqa", "quafu-qpu", "quafu-mock", "quafu-anneal-qpu", "quafu-anneal-mock", "quafu-fast-qpu", "quafu-fast-mock", "dwave-qpu", "dwave-hybrid", "dwave-mock")]
+    [string]$Solver = "exact",
     [string]$Dataset = "amlworld_full",
     [int]$CheckWindows = 2,
     [ValidateRange(1, 2147483647)]
@@ -15,9 +15,13 @@ $root = Split-Path -Parent $PSScriptRoot
 $env:QFG_SOLVER = $Solver
 $env:QFG_PRIORITY_MODE = "qubo"
 $env:QFG_DATASET = $Dataset
-if ($Solver -like "quafu*") {
+if ($env:QFG_SOURCE -eq "recorded" -and $Solver -notin @("exact", "sqa")) {
+    $env:QFG_SOURCE = "replay"
+}
+$quafuPython = Join-Path $root ".venv-quafu\Scripts\python.exe"
+if ($Solver -like "quafu*" -or ($Solver -eq "exact" -and (Test-Path -LiteralPath $quafuPython))) {
     # the Quafu SDK (quarkstudio) is installed only in the isolated environment
-    $python = Join-Path $root ".venv-quafu\Scripts\python.exe"
+    $python = $quafuPython
 } else {
     $python = "python"
 }
@@ -29,6 +33,8 @@ if ($PSBoundParameters.ContainsKey("WindowSize")) {
     $env:QFG_QUANTUM_MAX_BATCH = [string]$WindowSize
     $checkArgs += @("--window-size", $WindowSize)
 }
-& $python scripts\qpu_check.py @checkArgs
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Solver -notin @("exact", "sqa")) {
+    & $python scripts\qpu_check.py @checkArgs
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
 & $python -m streamlit run dashboard\app.py

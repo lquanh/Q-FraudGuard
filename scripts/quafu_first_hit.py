@@ -1,7 +1,7 @@
 """Check whether each AMLworld window yields a raw sample at the certified optimum.
 
-Record client time to the first winning batch and its verification. Estimate
-sampling time separately from the shot count and an assumed shot period.
+Save the measured bit strings and the quality certificate. Estimate sampling time
+from the shot count and an assumed shot period.
 """
 
 from __future__ import annotations
@@ -11,8 +11,6 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from statistics import median
-from time import perf_counter
 
 import numpy as np
 import pandas as pd
@@ -20,40 +18,28 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from qpu_check import candidate_windows  # noqa: E402
+from qpu_check import candidate_windows, measurement_evidence  # noqa: E402
 from qf_guard.postprocess import best_result, swap_local_search  # noqa: E402
 from qf_guard.prioritization import PriorityConfig, build_priority_qubo, exact_optimum, select_priority, selection_size  # noqa: E402
 from qf_guard.quafu import read_token, sampling_time_estimate  # noqa: E402
 from qf_guard.solvers import ExactSolver, build_solver  # noqa: E402
 
 
-def cpu_controls(window, config, repeats=7):
-    """Each clock starts at the same scored window. The reference optimum is checked later."""
-    times = {name: [] for name in ("top_k", "top_k_swap", "exact")}
-    energies = {}
-    exact = ExactSolver()
-    for _ in range(repeats):
-        started = perf_counter()
-        k = selection_size(len(window), config.selection_fraction)
-        ranked = sorted(range(len(window)), key=lambda i: -window[i]["risk_score"])[:k]
-        times["top_k"].append(perf_counter() - started)
-
-        started = perf_counter()
-        model = build_priority_qubo(window, config)
-        initial = np.zeros(len(window), dtype=np.int8)
-        initial[np.argsort(-np.asarray(model.metadata["risks"]), kind="stable")[:model.exact_k]] = 1
-        improved = swap_local_search(model, initial)
-        times["top_k_swap"].append(perf_counter() - started)
-        energies["top_k_swap"] = model.evaluate(improved)
-        initial.fill(0)
-        initial[ranked] = 1
-        energies["top_k"] = model.evaluate(initial)
-
-        started = perf_counter()
-        result = exact.solve(build_priority_qubo(window, config))
-        times["exact"].append(perf_counter() - started)
-        energies["exact"] = float(result.objective)
-    return {name: {"seconds": median(samples), "energy": energies[name]} for name, samples in times.items()}
+def cpu_controls(window, config):
+    """Evaluate the three reference selections on the same scored window."""
+    model = build_priority_qubo(window, config)
+    k = selection_size(len(window), config.selection_fraction)
+    ranked = sorted(range(len(window)), key=lambda i: -window[i]["risk_score"])[:k]
+    top_k = np.zeros(len(window), dtype=np.int8)
+    top_k[ranked] = 1
+    initial = np.zeros(len(window), dtype=np.int8)
+    initial[np.argsort(-np.asarray(model.metadata["risks"]), kind="stable")[:k]] = 1
+    improved = swap_local_search(model, initial)
+    return {
+        "top_k": {"energy": model.evaluate(top_k)},
+        "top_k_swap": {"energy": model.evaluate(improved)},
+        "exact": {"energy": float(ExactSolver().solve(model).objective)},
+    }
 
 
 def save(path, report):
@@ -93,9 +79,6 @@ def finish_window(row, window, config):
                selected=sorted(row["candidate_ids"][idx] for idx in best.selected_indices),
                optimum_energy=optimum, certified=True, optimal_reads=sum(a["optimal_reads"] for a in attempts),
                measured_reads=sum(a["measured_reads"] for a in attempts),
-               time_to_first_hit_s=winner["time_to_response_s"] if winner else None,
-               time_to_verified_hit_s=winner["time_to_verified_s"] if winner else None,
-               elapsed_s=last["time_to_verified_s"],
                **{key: last.get(key) for key in ("gamma", "beta", "leader_bias", "leader_probability")})
     row.pop("error", None)
     row.update(sampling_time_estimate(row["measured_reads"]))
@@ -146,7 +129,7 @@ def main():
     settings = {"solver": args.solver, "seed": args.seed, "sizes": args.sizes, "windows_per_size": args.windows,
                 "max_jobs": None if args.until_hit else args.max_jobs, "shots_per_job": solver.shots, "scores": args.scores.name,
                 "risk_normalization": config.risk_normalization, "connectivity_strength": config.connectivity_strength,
-                "cpu_repeats": 7, "variant": solver.fast_variant,
+                "variant": solver.fast_variant,
                 "selection": "linked disjoint windows within each size, sampled before solving"}
     if args.where_ranking_misses:
         settings["selection"] += ", restricted to top-K suboptimal under exhaustive enumeration"
@@ -156,8 +139,16 @@ def main():
     report = {"settings": settings, "rows": rows}
     if path.exists():
         report = json.loads(path.read_text(encoding="utf-8"))
+        report["settings"].pop("cpu_repeats", None)
         if settings != report["settings"] or [r["candidate_ids"] for r in rows] != [r["candidate_ids"] for r in report["rows"]]:
             parser.error("existing checkpoint refers to a different experiment")
+        for saved_row in report["rows"]:
+            for key in ("time_to_first_hit_s", "time_to_verified_hit_s", "elapsed_s"):
+                saved_row.pop(key, None)
+            for control in saved_row.get("cpu", {}).values():
+                control.pop("seconds", None)
+            if "attempts" in saved_row:
+                saved_row["attempts"] = [measurement_evidence(attempt) for attempt in saved_row["attempts"]]
     save(path, report)
     print(f"report -> {path}", flush=True)
     for row, (n, i, window) in zip(report["rows"], plan, strict=True):
@@ -166,13 +157,9 @@ def main():
         if not row.get("cpu"):
             row["cpu"] = cpu_controls(window, config)
         previous = list(row.get("attempts", []))
-        prior_elapsed = previous[-1]["time_to_verified_s"] if previous else 0.0
 
         def checkpoint(attempt):
-            record = dict(attempt)
-            record["time_to_response_s"] += prior_elapsed
-            record["time_to_verified_s"] += prior_elapsed
-            row.setdefault("attempts", []).append(record)
+            row.setdefault("attempts", []).append(measurement_evidence(attempt))
             save(path, report)
 
         try:
@@ -194,8 +181,6 @@ def main():
         save(path, report)
         ids = [a.get("task_id") for a in row.get("attempts", [])]
         details = []
-        if row.get("time_to_verified_hit_s") is not None:
-            details.append(f"client verified in {row['time_to_verified_hit_s']:.3f} s")
         if "estimated_sampling_ms" in row:
             details.append(f"estimated sampling {row['estimated_sampling_ms']:.1f} ms "
                            f"at {row['assumed_shot_period_us']:g} us/shot")

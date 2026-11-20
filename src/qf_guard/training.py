@@ -34,6 +34,8 @@ def train_and_evaluate(
     review_rate: float = .02,
     random_state: int = 42,
     dataset_name: str = "paysim",
+    temporal_graph_epochs: int = 0,
+    min_tgnn_weight: float = 0.0,
 ) -> tuple[RiskScorer, dict[str, Any]]:
     from sklearn.metrics import average_precision_score, roc_auc_score
 
@@ -41,7 +43,8 @@ def train_and_evaluate(
     train, validation, test = temporal_split(frame)
     config = replace(
         ScoringConfig(), target_candidate_rate=target_candidate_rate, review_rate=review_rate,
-        random_state=random_state
+        random_state=random_state, temporal_graph_epochs=temporal_graph_epochs,
+        min_tgnn_weight=min_tgnn_weight,
     )
     scorer = RiskScorer(config).fit(train, validation)
     scored = scorer.score(test)
@@ -53,6 +56,8 @@ def train_and_evaluate(
     metrics: dict[str, Any] = {
         "mode": f"normal_temporal_{dataset_name}_lightgbm",
         "dataset": dataset_name,
+        "graph_model": "tgnn" if temporal_graph_epochs else "heuristic",
+        "min_tgnn_weight": min_tgnn_weight,
         "rows": int(len(train) + len(validation) + len(test)),
         "target_candidate_rate": target_candidate_rate,
         "split_rows": [len(train), len(validation), len(test)],

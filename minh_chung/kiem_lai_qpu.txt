@@ -1,0 +1,11 @@
+Q-FraudGuard | Đối chiếu chất lượng nghiệm từ bản ghi trong gói
+2026-11-20T16:30:07+07:00
+Python 3.13.1
+python scripts/verify_quafu_evidence.py
+
+quafu_verified_hits_8_12_15_18_20261118T212255Z.json: QPU 40/40, CPU top-K 40/40, CPU top-K + swap 40/40, 40 jobs, 3776/40960 optimal shots
+  AMLworld positives among selected slots: QPU 3/130, top-K 3/130 (3 positive candidate occurrences, identical selections in 40/40 windows)
+  CPU-only top-K optimum at c=0.25: max normalization 31/40, raw scores 2/40
+quafu_ranking_misses_8_12_15_18_20261118T212601Z.json: QPU 4/4, CPU top-K 0/4, CPU top-K + swap 4/4, 11 jobs, 51/11264 optimal shots
+  AMLworld positives among selected slots: QPU 0/13, top-K 0/13 (0 positive candidate occurrences, identical selections in 0/4 windows)
+  CPU-only top-K optimum at c=0.25: max normalization 0/4, raw scores 0/4

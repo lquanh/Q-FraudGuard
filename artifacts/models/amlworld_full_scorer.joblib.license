@@ -1,0 +1,13 @@
+IBM AMLworld HI-Small transaction history embedded in this scorer
+
+Source: IBM Transactions for Anti Money Laundering (AML), HI-Small
+Provider: IBM, Erik Altman et al.
+https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml
+
+Changes: Q-FraudGuard selected transactions for the scorer's feature history,
+normalized the data, assigned transaction IDs and combined bank and account IDs.
+The scorer also stores confirmed-account timestamps based on AMLworld labels.
+
+License of the embedded history: CDLA-Sharing-1.0
+https://cdla.dev/sharing-1-0/
+Offline copy: ../../data/licenses/CDLA-Sharing-1.0.txt

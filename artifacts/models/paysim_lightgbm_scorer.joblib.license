@@ -1,0 +1,13 @@
+PaySim transaction history embedded in this scorer
+
+Source: Synthetic Financial Datasets For Fraud Detection (PaySim)
+Publisher: Edgar López-Rojas
+https://www.kaggle.com/datasets/ealaxi/paysim1
+
+Changes: Q-FraudGuard selected and normalized 79,532 transactions for the
+scorer's feature history. Normalization includes generated transaction IDs
+and timestamps derived from PaySim steps.
+
+License of the embedded history: CC-BY-SA-4.0
+https://creativecommons.org/licenses/by-sa/4.0/legalcode.en
+Offline copy: ../../data/licenses/CC-BY-SA-4.0.txt

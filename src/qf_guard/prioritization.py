@@ -197,7 +197,8 @@ def certify(model: QUBOModel, result: SolverResult, *, reference=None) -> dict[s
     return certificate
 
 
-def _certify_fast_jobs(model, solver, first, started, first_ready, limit, on_measurement, attempt_offset):
+def _certify_fast_jobs(model, solver, first, started, first_ready, limit, on_measurement, attempt_offset,
+                       accept_fallback):
     """Stop at the first returned histogram with a measured optimum. Keep the reference off the QPU."""
     reference = exact_optimum(model)
     best = first
@@ -213,13 +214,16 @@ def _certify_fast_jobs(model, solver, first, started, first_ready, limit, on_mea
             except Exception as exc:
                 if limit is None:
                     raise
-                attempts.append({"error": type(exc).__name__, "time_to_response_s": perf_counter() - started})
+                attempts.append({"error": type(exc).__name__, "error_detail": str(exc)[:300],
+                                 "time_to_response_s": perf_counter() - started})
                 break
             ready = perf_counter()
         meta = result.metadata
         if (meta.get("fallback_reason") or meta.get("backend") != first.metadata.get("backend")
                 or meta.get("solver") not in ("quafu_fast_xy", "quafu_fast_local")):
-            if best_cert is None:
+            if accept_fallback and meta.get("fallback_reason"):
+                best, best_cert = result, certify(model, result, reference=reference)
+            elif best_cert is None:
                 best_cert = certify(model, first, reference=reference)
             attempts.append({"backend": meta.get("backend"), "error": "fallback", "time_to_response_s": ready - started})
             break
@@ -267,6 +271,7 @@ def select_priority(
     max_measurement_jobs: int | None = 3,
     on_measurement: Callable[[dict], None] | None = None,
     attempt_offset: int = 0,
+    accept_fallback: bool = False,
 ) -> PrioritySelection:
     """Choose the K candidates (and their connections) to investigate first.
 
@@ -292,7 +297,7 @@ def select_priority(
     if certify_optimum:
         if result.metadata.get("solver") in ("quafu_fast_xy", "quafu_fast_local"):
             result, certificate = _certify_fast_jobs(model, solver, result, started, perf_counter(), max_measurement_jobs,
-                                                    on_measurement, attempt_offset)
+                                                    on_measurement, attempt_offset, accept_fallback)
         else:
             certificate = certify(model, result)
     return PrioritySelection(

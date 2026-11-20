@@ -1,0 +1,11 @@
+{
+  "name": "q-fraudguard-ui-assets",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "design-system": "python build_design_system.py"
+  },
+  "devDependencies": {
+    "ui-ux-pro-max-cli": "^2.15.0"
+  }
+}

@@ -26,6 +26,8 @@ dist/
 .vscode/
 .DS_Store
 Thumbs.db
+~$*
+.agents/
 
 # Runtime output
 *.log
@@ -33,6 +35,8 @@ artifacts/*
 !artifacts/models/
 artifacts/models/*
 !artifacts/models/paysim_lightgbm_scorer.joblib
+!artifacts/models/paysim_lightgbm_scorer.joblib.license
+!artifacts/models/amlworld_full_scorer.joblib.license
 !artifacts/models/paysim_realtime_metrics.json
 !artifacts/models/*.review.json
 
@@ -44,12 +48,15 @@ artifacts/deploy/*
 !artifacts/deploy/quafu_dashboard_18_20261118T220101Z.json
 !artifacts/deploy/qpu_check_quafu-anneal-qpu_20261118T204034Z.json
 !artifacts/deploy/dwave_single_read_cpu_reference.csv
+!artifacts/deploy/dwave_zephyr_window_cpu_reference.csv
 !artifacts/training/
 artifacts/training/*
 !artifacts/training/amlworld_full_operating_points.json
+!artifacts/training/amlworld_full_flag_budgets.json
 !artifacts/training/amlworld_full_report.json
 !artifacts/training/amlworld_training_report.md
 !artifacts/training/amlworld_training_report.json
+!artifacts/training/amlworld_tgnn_pilot_comparison.json
 
 # Downloaded research datasets; keep the runtime PaySim file tracked
 data/downloads/*

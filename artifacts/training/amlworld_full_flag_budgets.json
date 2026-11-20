@@ -1,0 +1,62 @@
+{
+  "0.03": {
+    "threshold": 0.0017165225451957376,
+    "test_flag": 0.04311988403148167,
+    "recall": 0.8582677165354331,
+    "caught": 981,
+    "precision": 0.02240442150459051,
+    "false_alerts": 42805,
+    "attempts": "183/183",
+    "sender_accounts": "800/845"
+  },
+  "0.04": {
+    "threshold": 0.001075763532813469,
+    "test_flag": 0.05261815474549165,
+    "recall": 0.8722659667541557,
+    "caught": 997,
+    "precision": 0.018659579644775506,
+    "false_alerts": 52434,
+    "attempts": "183/183",
+    "sender_accounts": "812/845"
+  },
+  "0.05": {
+    "threshold": 0.0007770529123229654,
+    "test_flag": 0.061059748997486826,
+    "recall": 0.8810148731408574,
+    "caught": 1007,
+    "precision": 0.016241149621792492,
+    "false_alerts": 60996,
+    "attempts": "183/183",
+    "sender_accounts": "819/845"
+  },
+  "0.06": {
+    "threshold": 0.0005994537120137824,
+    "test_flag": 0.06884547510064523,
+    "recall": 0.8880139982502188,
+    "caught": 1015,
+    "precision": 0.014518874536897968,
+    "false_alerts": 68894,
+    "attempts": "183/183",
+    "sender_accounts": "821/845"
+  },
+  "0.08": {
+    "threshold": 0.0003912866382250981,
+    "test_flag": 0.08445730357438293,
+    "recall": 0.9090113735783028,
+    "caught": 1039,
+    "precision": 0.012114922693034212,
+    "false_alerts": 84723,
+    "attempts": "183/183",
+    "sender_accounts": "829/845"
+  },
+  "0.1": {
+    "threshold": 0.0002698598889814153,
+    "test_flag": 0.10145177301053328,
+    "recall": 0.9282589676290464,
+    "caught": 1061,
+    "precision": 0.010299071045147011,
+    "false_alerts": 101958,
+    "attempts": "183/183",
+    "sender_accounts": "834/845"
+  }
+}
